@@ -1,0 +1,26 @@
+import mongoose from "mongoose";
+
+const ShopSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    },
+    logoUrl: String,
+    googlePlaceId: { type: String, trim: true },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    alertEmail: { type: String, lowercase: true, trim: true },
+    status: { type: String, enum: ["trial", "active", "paused"], default: "trial" },
+    trialEndsAt: Date,
+    paidUntil: Date,
+    plan: { type: String, enum: ["basic", "premium"], default: "basic" },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.models.Shop || mongoose.model("Shop", ShopSchema);

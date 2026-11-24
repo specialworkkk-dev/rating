@@ -1,0 +1,19 @@
+# deps / build
+node_modules/
+.next/
+out/
+build/
+.npm-cache/
+
+# local dev database (mongodb-memory-server)
+.mongodb-binaries/
+.data/
+
+# env / secrets
+.env*
+!.env.example
+
+# misc
+.DS_Store
+*.log
+next-env.d.ts

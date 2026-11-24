@@ -1,0 +1,70 @@
+import mongoose from "mongoose";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import BillingPanel from "@/components/BillingPanel";
+import CopyButton from "@/components/CopyButton";
+import OwnerForm from "@/components/OwnerForm";
+import QrPoster from "@/components/QrPoster";
+import ShopForm from "@/components/ShopForm";
+import { btnSecondary, card } from "@/components/ui";
+import { requirePageRole } from "@/lib/session";
+import { adminShop } from "@/lib/shopInput";
+import { siteUrl } from "@/lib/site";
+import { getShopStats, sinceFor } from "@/lib/stats";
+import Shop from "@/models/Shop";
+import User from "@/models/User";
+
+export const metadata = { title: "Shop · Admin" };
+
+export default async function AdminShopPage({ params, searchParams }) {
+  await requirePageRole("admin");
+  const { id } = await params;
+  const { created } = await searchParams;
+  if (!mongoose.isValidObjectId(id)) notFound();
+
+  const doc = await Shop.findById(id).lean();
+  if (!doc) notFound();
+  const owner = doc.ownerId ? await User.findById(doc.ownerId).select("name email").lean() : null;
+  const shop = adminShop(doc, owner);
+  const [stats, base] = await Promise.all([getShopStats(doc._id, sinceFor("30")), siteUrl()]);
+  const ratingUrl = `${base}/r/${shop.slug}`;
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-4">
+      <Link href="/admin" className="text-sm text-stone-600">
+        ← All shops
+      </Link>
+      <h1 className="text-xl font-bold">{shop.name}</h1>
+
+      {created && (
+        <p className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900 ring-1 ring-emerald-200">
+          Shop created with a 15-day free trial. Next, create the owner login below.
+        </p>
+      )}
+
+      <section className={`${card} space-y-3`}>
+        <div className="flex flex-wrap items-center gap-2">
+          <code className="rounded-lg bg-stone-100 px-3 py-2 text-sm break-all">{ratingUrl}</code>
+          <CopyButton text={ratingUrl} />
+          <a href={ratingUrl} target="_blank" rel="noopener noreferrer" className={btnSecondary}>
+            Open
+          </a>
+        </div>
+        <p className="text-sm text-muted">
+          Last 30 days: {stats.scans} scans · {stats.ratings} ratings
+          {stats.average != null && ` · ${stats.average.toFixed(1)}★ avg`} · {stats.googleClicks} sent to
+          Google · {stats.unhappy} unhappy ({stats.unreadFeedback} unread feedback)
+        </p>
+      </section>
+
+      <BillingPanel shop={shop} />
+      <QrPoster
+        endpoint={`/api/admin/shops/${shop.id}/qr`}
+        ratingUrl={ratingUrl}
+        version={`${shop.slug}-${doc.updatedAt?.getTime?.() ?? ""}`}
+      />
+      <OwnerForm shopId={shop.id} owner={shop.owner} />
+      <ShopForm shop={shop} />
+    </div>
+  );
+}

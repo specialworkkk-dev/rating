@@ -1,0 +1,34 @@
+{
+  "name": "review-booster",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:dev": "node scripts/dev-db.mjs",
+    "seed": "node --env-file=.env.local scripts/seed.mjs",
+    "create-admin": "node --env-file=.env.local scripts/create-admin.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "3.0.3",
+    "mongoose": "9.13.0",
+    "next": "16.4.6",
+    "next-auth": "5.0.0-beta.32",
+    "pdf-lib": "1.17.1",
+    "qrcode": "1.5.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.5",
+    "mongodb-memory-server-core": "11.4.0",
+    "tailwindcss": "4.3.5"
+  },
+  "config": {
+    "mongodbMemoryServer": {
+      "downloadDir": "./.mongodb-binaries"
+    }
+  }
+}
