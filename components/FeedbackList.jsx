@@ -4,6 +4,21 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { card, fmtDateTime } from "./ui";
 
+const STAR_BADGE = {
+  1: "bg-red-50 text-red-700 ring-red-200",
+  2: "bg-orange-50 text-orange-700 ring-orange-200",
+  3: "bg-amber-50 text-amber-800 ring-amber-200",
+};
+
+function initials(name) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  return parts
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+}
+
 export default function FeedbackList({ initial }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
@@ -54,32 +69,62 @@ export default function FeedbackList({ initial }) {
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
       {shown.length === 0 ? (
-        <p className="mt-6 mb-2 text-center text-sm text-muted">
-          {filter === "unread" ? "All caught up. No unread feedback." : "No feedback yet."}
-        </p>
+        <div className="mt-6 mb-2 flex flex-col items-center text-center">
+          <span className="flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          </span>
+          <p className="mt-3 font-medium">
+            {filter === "unread" ? "All caught up" : "No complaints yet"}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            {filter === "unread"
+              ? "You’ve read all your feedback."
+              : "When a customer rates 1–3★ and writes to you, it shows up here."}
+          </p>
+        </div>
       ) : (
         <ul className="mt-4 divide-y divide-stone-100">
           {shown.map((f) => (
-            <li key={f.id} className={`py-4 ${f.isRead ? "opacity-70" : ""}`}>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                {!f.isRead && <span className="size-2 rounded-full bg-red-600" aria-label="Unread" />}
-                <span className="font-semibold text-red-600">{f.stars}★</span>
-                <span className="font-medium">{f.name || "Anonymous"}</span>
-                {f.phone && (
-                  <a href={`tel:${f.phone.replace(/[^\d+]/g, "")}`} className="text-brand-700 underline">
-                    {f.phone}
-                  </a>
+            <li key={f.id} className={`flex gap-3 py-4 ${f.isRead ? "opacity-70" : ""}`}>
+              <span className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-600">
+                {initials(f.name || "")}
+                {!f.isRead && (
+                  <span className="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-red-600 ring-2 ring-white" aria-label="Unread" />
                 )}
-                <span className="text-muted">{fmtDateTime(f.createdAt)}</span>
-                <button
-                  type="button"
-                  onClick={() => setRead(f.id, !f.isRead)}
-                  className="ml-auto text-sm font-medium text-stone-600 hover:text-ink"
-                >
-                  {f.isRead ? "Mark unread" : "Mark as read"}
-                </button>
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start gap-3">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="truncate font-medium">{f.name || "Anonymous"}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ${STAR_BADGE[f.stars] || STAR_BADGE[3]}`}
+                    >
+                      {f.stars}★
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRead(f.id, !f.isRead)}
+                    className="ml-auto shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50 hover:text-ink sm:text-sm"
+                  >
+                    {f.isRead ? "Mark unread" : "Mark as read"}
+                  </button>
+                </div>
+                <p className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-muted sm:text-sm">
+                  {f.phone && (
+                    <>
+                      <a href={`tel:${f.phone.replace(/[^\d+]/g, "")}`} className="font-medium text-brand-700 underline">
+                        {f.phone}
+                      </a>
+                      <span aria-hidden="true">·</span>
+                    </>
+                  )}
+                  <span>{fmtDateTime(f.createdAt)}</span>
+                </p>
+                <p className="mt-2 whitespace-pre-wrap text-[15px] leading-relaxed">{f.message}</p>
               </div>
-              <p className="mt-2 whitespace-pre-wrap text-[15px]">{f.message}</p>
             </li>
           ))}
         </ul>
