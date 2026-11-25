@@ -94,22 +94,6 @@ export default async function DashboardPage({ searchParams }) {
 
         <StatsCards stats={stats} series={series} />
 
-        <Link
-          href="/dashboard/ratings"
-          prefetch={true}
-          className={`${card} group flex items-center gap-4 transition-colors hover:ring-stone-300`}
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
-            <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
-              <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold">Daily ratings</span>
-            <span className="block text-sm text-muted">Day-by-day chart and detailed figures for any period</span>
-          </span>
-          <span className="text-stone-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>
-        </Link>
 
         <QrPoster
           endpoint="/api/dashboard/qr"
