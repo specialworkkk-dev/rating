@@ -1,6 +1,5 @@
 import Link from "next/link";
 import ActivityChart from "@/components/ActivityChart";
-import AppHeader from "@/components/AppHeader";
 import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
 import FairRulesAgree from "@/components/FairRulesAgree";
@@ -11,13 +10,10 @@ import StatsCards from "@/components/StatsCards";
 import { card, fmtDate } from "@/components/ui";
 import { BRAND } from "@/lib/brand";
 import { fmtNum } from "@/lib/format";
-import { ownerLinks } from "@/lib/ownerNav";
-import { requirePageRole } from "@/lib/session";
+import { getOwnerContext } from "@/lib/ownerContext";
 import { formatINR, shopPrice } from "@/lib/pricing";
-import { pauseReason } from "@/lib/shop";
 import { siteUrl } from "@/lib/site";
 import { getDailySeries, getMonthlySeries, getShopStats, hasAnyRating, normalizeRange, sinceFor } from "@/lib/stats";
-import Shop from "@/models/Shop";
 
 export const metadata = { title: `Dashboard · ${BRAND.name}` };
 
@@ -28,49 +24,37 @@ const RANGES = [
 ];
 
 export default async function DashboardPage({ searchParams }) {
-  const user = await requirePageRole("owner"); // admins are sent to /admin
-
-  const shop = user.shopId ? await Shop.findById(user.shopId).lean() : null;
+  const { shop, paused } = await getOwnerContext();
   if (!shop) {
     return (
-      <>
-        <AppHeader user={user} />
-        <main className="mx-auto max-w-5xl px-4 py-10">
-          <p className={card}>Your account isn’t linked to a shop yet. Please contact support.</p>
-        </main>
-      </>
+      <main className="mx-auto max-w-5xl px-4 py-10">
+        <p className={card}>Your account isn’t linked to a shop yet. Please contact support.</p>
+      </main>
     );
   }
 
   // While paused, the owner sees only the paused notice: clear, and no data shown.
-  const paused = pauseReason(shop);
   if (paused) {
     return (
-      <>
-        <AppHeader user={user} shop={shop} showBell={false} />
-        <main className="px-4 py-10 sm:py-16">
-          <PausedNotice
-            reason={paused}
-            shopName={shop.name}
-            endedAt={shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil}
-          />
-        </main>
-      </>
+      <main className="px-4 py-10 sm:py-16">
+        <PausedNotice reason={paused} shopName={shop.name} endedAt={shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil} />
+      </main>
     );
   }
 
   const range = normalizeRange((await searchParams).range);
   const chartDays = range === "7" ? 7 : 30;
-  const [stats, base, series, everRated] = await Promise.all([
+  // 7 and 30 days: a bar per day. All time: a bar per month (last 12 months),
+  // because 365 daily bars would be unreadable. Everything loads in parallel.
+  const monthly = range === "all";
+  const [stats, base, series, everRated, monthSeries] = await Promise.all([
     getShopStats(shop._id, sinceFor(range)),
     siteUrl(),
     getDailySeries(shop._id, chartDays),
     hasAnyRating(shop._id),
+    monthly ? getMonthlySeries(shop._id, 12) : null,
   ]);
-  // 7 and 30 days: a bar per day. All time: a bar per month (last 12 months),
-  // because 365 daily bars would be unreadable.
-  const monthly = range === "all";
-  const chartSeries = monthly ? await getMonthlySeries(shop._id, 12) : series;
+  const chartSeries = monthSeries || series;
   const ratingUrl = `${base}/r/${shop.slug}`;
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
   const daysLeft = until ? Math.max(0, Math.ceil((new Date(until) - Date.now()) / 86400000)) : null;
@@ -91,7 +75,6 @@ export default async function DashboardPage({ searchParams }) {
 
   return (
     <>
-      <AppHeader user={user} shop={shop} badge={stats.unreadFeedback} links={ownerLinks(stats.unreadFeedback)} />
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6">
         <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} unread={stats.unreadFeedback} />
 

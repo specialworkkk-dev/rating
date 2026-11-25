@@ -21,6 +21,8 @@ export default function NavLinks({ links, variant = "bar" }) {
           <Link
             key={l.href}
             href={l.href}
+            // Load the other tab in the background, so the first tap is instant.
+            prefetch={true}
             aria-current={active ? "page" : undefined}
             className={
               tabs

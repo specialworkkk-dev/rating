@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    // Revisiting a page within 30 s is instant (client cache). Actions like
+    // "mark as read" call router.refresh(), which still fetches fresh data.
+    // Prefetched tabs ("static") are also kept for at most 30 s, so numbers
+    // and new complaints are never more than half a minute old.
+    staleTimes: { dynamic: 30, static: 30 },
+  },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
   },

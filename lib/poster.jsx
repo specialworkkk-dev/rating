@@ -309,7 +309,9 @@ export async function posterResponse(req, shop, ratingUrl) {
     headers: {
       "Content-Type": type,
       "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${filename}"`,
-      "Cache-Control": "private, no-store",
+      // Previews are versioned (?v=slug-updatedAt), so the browser can keep them;
+      // downloads are always generated fresh.
+      "Cache-Control": preview ? "private, max-age=86400" : "private, no-store",
     },
   });
 }

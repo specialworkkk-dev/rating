@@ -57,7 +57,7 @@ export default function AppHeader({ user, shop = null, title = "", badge = 0, li
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
           {shop && showBell && (
-            <a
+            <Link
               href="/dashboard/feedback"
               className="relative flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-ink"
               aria-label={badge ? `${badge} unread messages` : "Messages"}
@@ -78,7 +78,7 @@ export default function AppHeader({ user, shop = null, title = "", badge = 0, li
                   {badge > 99 ? "99+" : badge}
                 </span>
               )}
-            </a>
+            </Link>
           )}
           <AccountMenu name={user.name || ""} email={user.email} role={user.role} />
         </div>
