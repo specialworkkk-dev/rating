@@ -30,9 +30,10 @@ for (const model of [User, Shop, Rating, Feedback, Scan, RateLimit, ShopTotals, 
 const shops = await Shop.find().select("_id").lean();
 const t0 = Date.now();
 for (const s of shops) {
+  // Days before months: the monthly counts are added up from the days.
   await recomputeTotals(s._id);
-  await recomputeMonths(s._id);
   await recomputeDays(s._id);
+  await recomputeMonths(s._id);
 }
 console.log(`  Totals    recomputed (all-time, monthly, daily) for ${shops.length} shops in ${Date.now() - t0} ms`);
 

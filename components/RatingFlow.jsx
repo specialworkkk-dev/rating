@@ -9,22 +9,30 @@ import Unavailable from "@/app/r/[slug]/Unavailable";
 
 const sourceFromUrl = () => (new URLSearchParams(window.location.search).get("src") === "nfc" ? "nfc" : "qr");
 
-function useLogScan(slug) {
+// One request per page load: counts the scan (first open this session only,
+// so reloads are not counted twice) and tells us if the viewer is the shop's
+// own logged-in owner. The page itself is cached for everyone, so this has to
+// be asked with this phone's cookies.
+function useVisit(slug, onOwnShop) {
   useEffect(() => {
-    // Count a scan once per browser session, not on every reload. The source
-    // is read here, from the address, so NFC taps are never logged as QR.
+    // The source is read here, from the address, so NFC taps are never logged as QR.
     const source = sourceFromUrl();
     const key = `rb_scan_${slug}`;
+    let count = true;
     try {
-      if (sessionStorage.getItem(key)) return;
-      sessionStorage.setItem(key, "1");
+      if (sessionStorage.getItem(key)) count = false;
+      else sessionStorage.setItem(key, "1");
     } catch {}
     fetch("/api/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, source }),
+      body: JSON.stringify({ slug, source, count }),
       keepalive: true,
-    }).catch(() => {});
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j?.ownShop && onOwnShop())
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 }
 
@@ -50,7 +58,6 @@ function useSource() {
 
 export default function RatingFlow({ shop }) {
   const source = useSource();
-  useLogScan(shop.slug);
 
   const [stars, setStars] = useState(0);
   const [step, setStep] = useState("rate"); // rate | google | feedback | thanks
@@ -61,14 +68,7 @@ export default function RatingFlow({ shop }) {
   const [openedGoogle, setOpenedGoogle] = useState(false);
   const [ownShop, setOwnShop] = useState(false);
 
-  // The page is cached for everyone, so ask the server (with this phone's
-  // cookies) whether the viewer is this shop's logged-in owner.
-  useEffect(() => {
-    fetch(`/api/rating/viewer?slug=${encodeURIComponent(shop.slug)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => j?.ownShop && setOwnShop(true))
-      .catch(() => {});
-  }, [shop.slug]);
+  useVisit(shop.slug, () => setOwnShop(true));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
