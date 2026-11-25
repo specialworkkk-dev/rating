@@ -175,6 +175,122 @@ function Actions({ f, onToggleRead, onDelete, compact = false }) {
   );
 }
 
+const STAR_FILL = { 1: "#c23434", 2: "#e66767", 3: "#aeaba4" };
+const AVATAR_TONE = {
+  1: "bg-red-100 text-red-700",
+  2: "bg-orange-100 text-orange-700",
+  3: "bg-amber-100 text-amber-800",
+};
+
+function StarRow({ stars }) {
+  return (
+    <span className="inline-flex gap-px" aria-label={`${stars} out of 5 stars`}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg key={i} viewBox="0 0 24 24" className="size-3.5" aria-hidden="true">
+          <path
+            d="M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.52l-5.88 3.09 1.12-6.55L2.48 9.42l6.58-.96L12 2.5z"
+            fill={i <= stars ? STAR_FILL[stars] || STAR_FILL[3] : "#e7e5e4"}
+          />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+/** Phone layout: one roomy card per message with big, thumb-friendly buttons. */
+function PhoneCard({ f, onToggleRead, onDelete }) {
+  const [confirming, setConfirming] = useState(false);
+  const wa = whatsappLink(f.phone);
+  const tel = f.phone ? `tel:${f.phone.replace(/[^\d+]/g, "")}` : null;
+  const btn =
+    "flex h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold ring-1 transition-colors active:scale-[0.98]";
+
+  return (
+    <li
+      className={`relative overflow-hidden rounded-2xl bg-white p-4 shadow-sm ring-1 ${
+        f.isRead ? "ring-stone-200" : "ring-amber-300"
+      }`}
+    >
+      {!f.isRead && <span className="absolute inset-y-0 left-0 w-1 bg-amber-400" aria-hidden="true" />}
+
+      <div className="flex items-start gap-3">
+        <span className={`flex size-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${AVATAR_TONE[f.stars] || AVATAR_TONE[3]}`}>
+          {initials(f.name || "")}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className={`min-w-0 flex-1 text-base leading-snug break-words ${f.isRead ? "font-medium text-stone-700" : "font-bold text-ink"}`}>
+              {f.name || "Anonymous customer"}
+            </p>
+            {!f.isRead && (
+              <span className="shrink-0 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold tracking-wide text-white uppercase">New</span>
+            )}
+          </div>
+          <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-sm">
+            <span className="flex items-center gap-1.5">
+              <StarRow stars={f.stars} />
+              <span className="font-medium text-stone-700">{STAR_LABEL[f.stars]}</span>
+            </span>
+            <time dateTime={f.createdAt} title={fmtFull(f.createdAt)} className="text-muted">
+              {fmtRelative(f.createdAt)}
+            </time>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-2xl rounded-tl-md bg-stone-50 px-4 py-3 text-[15px] leading-relaxed text-ink">
+        <MessageText text={f.message} />
+      </div>
+
+      {f.phone && <p className="mt-3 text-sm text-muted">Phone: <span className="font-medium text-ink tabular-nums">{f.phone}</span></p>}
+
+      {confirming ? (
+        <div className="mt-3 rounded-xl bg-red-50 p-3 ring-1 ring-red-200">
+          <p className="text-sm font-medium text-red-800">Delete this message for good?</p>
+          <div className="mt-2.5 flex gap-2">
+            <button type="button" onClick={() => setConfirming(false)} className={`${btn} bg-white text-stone-700 ring-stone-300`}>
+              Cancel
+            </button>
+            <button type="button" onClick={() => onDelete(f)} className={`${btn} bg-red-600 text-white ring-red-600`}>
+              Delete
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-3 flex gap-2">
+          {tel && (
+            <a href={tel} className={`${btn} bg-white text-stone-800 ring-stone-300`}>
+              <Icon d={PHONE} className="size-4" /> Call
+            </a>
+          )}
+          {wa && (
+            <a href={wa} target="_blank" rel="noopener noreferrer" className={`${btn} bg-emerald-600 text-white ring-emerald-600`}>
+              <Icon d={CHAT} className="size-4" /> WhatsApp
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => onToggleRead(f)}
+            aria-label={f.isRead ? "Mark as unread" : "Mark as read"}
+            className={`${btn} bg-white text-stone-800 ring-stone-300 ${tel ? "w-11 flex-none" : ""}`}
+          >
+            <Icon d={f.isRead ? MAIL : CHECK} className="size-4" />
+            <span className={tel ? "sr-only" : ""}>{f.isRead ? "Mark unread" : "Mark read"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            aria-label="Delete message"
+            className={`${btn} w-11 flex-none bg-white text-red-600 ring-stone-300`}
+          >
+            <Icon d={TRASH} className="size-4" />
+          </button>
+        </div>
+      )}
+    </li>
+  );
+}
+
 /** Private complaints inbox: a table on tablet/desktop, cards on phones. */
 export default function FeedbackList({ initial }) {
   const router = useRouter();
@@ -254,9 +370,12 @@ export default function FeedbackList({ initial }) {
   const { items, counts } = data;
 
   return (
-    <section ref={top} className="scroll-mt-24 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200">
+    <section
+      ref={top}
+      className="scroll-mt-28 md:overflow-hidden md:rounded-2xl md:bg-white md:shadow-sm md:ring-1 md:ring-stone-200"
+    >
       {/* Toolbar */}
-      <div className="space-y-4 p-4 sm:p-5">
+      <div className="space-y-3 md:space-y-4 md:p-5">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="font-semibold">Inbox</h2>
           {counts.unread > 0 && <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">{fmtNum(counts.unread)} new</span>}
@@ -268,7 +387,9 @@ export default function FeedbackList({ initial }) {
               className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50 hover:text-ink"
               aria-expanded={cleanup}
             >
-              <Icon d={TRASH} className="size-3.5" /> Clean up old messages
+              <Icon d={TRASH} className="size-3.5" />
+              <span className="md:hidden">Clean up</span>
+              <span className="hidden md:inline">Clean up old messages</span>
             </button>
           )}
         </div>
@@ -295,8 +416,9 @@ export default function FeedbackList({ initial }) {
         )}
 
         {counts.all > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex rounded-xl bg-stone-100 p-1 text-sm" role="tablist" aria-label="Status">
+          <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] md:mx-0 md:overflow-visible md:px-0 md:pb-0">
+            <div className="flex shrink-0 rounded-xl bg-stone-200/60 p-1 text-sm md:bg-stone-100" role="tablist" aria-label="Status">
               {STATUSES.map((s) => (
                 <button
                   key={s.key}
@@ -314,7 +436,7 @@ export default function FeedbackList({ initial }) {
               ))}
             </div>
 
-            <div className="flex rounded-xl bg-stone-100 p-1 text-sm" role="group" aria-label="Stars">
+            <div className="flex shrink-0 rounded-xl bg-stone-200/60 p-1 text-sm md:bg-stone-100" role="group" aria-label="Stars">
               {[null, 1, 2, 3].map((s) => (
                 <button
                   key={s ?? "any"}
@@ -327,8 +449,9 @@ export default function FeedbackList({ initial }) {
                 </button>
               ))}
             </div>
+            </div>
 
-            <label className="relative w-full md:ml-auto md:w-64">
+            <label className="relative order-first w-full md:order-none md:ml-auto md:w-64">
               <span className="sr-only">Search messages</span>
               <svg viewBox="0 0 24 24" className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true">
                 <path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -349,7 +472,7 @@ export default function FeedbackList({ initial }) {
 
       <div className={`transition-opacity ${loading ? "opacity-50" : ""}`} aria-busy={loading}>
         {items.length === 0 ? (
-          <div className="flex flex-col items-center border-t border-stone-100 px-4 pt-6 pb-8 text-center">
+          <div className="mt-4 flex flex-col items-center rounded-2xl bg-white px-4 pt-6 pb-8 text-center ring-1 ring-stone-200 md:mt-0 md:rounded-none md:border-t md:border-stone-100 md:ring-0">
             <InboxIllustration />
             {filtered ? (
               <>
@@ -426,40 +549,17 @@ export default function FeedbackList({ initial }) {
               </table>
             </div>
 
-            {/* Phones: one card per message */}
-            <ul className="divide-y divide-stone-100 border-t border-stone-200 md:hidden">
+            {/* Phones: one roomy card per message */}
+            <ul className="mt-4 space-y-3 md:hidden">
               {items.map((f) => (
-                <li key={f.id} className={`relative space-y-2.5 px-4 py-4 ${f.isRead ? "" : "bg-amber-50/50"}`}>
-                  {!f.isRead && <span className="absolute inset-y-0 left-0 w-1 bg-amber-400" aria-hidden="true" />}
-                  <div className="flex items-start gap-3">
-                    <Avatar f={f} />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`truncate ${f.isRead ? "font-medium" : "font-semibold"}`}>{f.name || "Anonymous customer"}</p>
-                        <time dateTime={f.createdAt} title={fmtFull(f.createdAt)} className="shrink-0 text-xs text-muted">
-                          {fmtRelative(f.createdAt)}
-                        </time>
-                      </div>
-                      <div className="mt-1">
-                        <StarBadge stars={f.stars} />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-[15px] text-ink">
-                    <MessageText text={f.message} />
-                  </div>
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Contact phone={f.phone} />
-                    <Actions f={f} onToggleRead={toggleRead} onDelete={remove} compact />
-                  </div>
-                </li>
+                <PhoneCard key={f.id} f={f} onToggleRead={toggleRead} onDelete={remove} />
               ))}
             </ul>
           </>
         )}
       </div>
 
-      <div className="p-4 sm:px-5">
+      <div className="pt-4 md:p-5">
         <Pagination
           page={data.page}
           pages={data.pages}

@@ -44,9 +44,12 @@ export default async function FeedbackPage() {
       <AppHeader user={user} shop={shop} badge={feedback.counts.unread} links={ownerLinks(feedback.counts.unread)} />
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Private feedback</h1>
-          <p className="mt-1 text-muted">
-            Messages from customers who rated you 1–3★. Only you can see them. Call or WhatsApp them to put things right.
+          <h1 className="text-xl font-bold tracking-tight md:text-2xl">Private feedback</h1>
+          <p className="mt-1 text-sm text-muted md:text-base">
+            <span className="md:hidden">From customers who rated 1–3★. Only you can see them.</span>
+            <span className="hidden md:inline">
+              Messages from customers who rated you 1–3★. Only you can see them. Call or WhatsApp them to put things right.
+            </span>
           </p>
         </div>
         <FeedbackList initial={feedback} />
