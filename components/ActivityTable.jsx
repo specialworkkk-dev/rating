@@ -212,7 +212,7 @@ export default function ActivityTable() {
                 <thead className="bg-stone-50 text-left text-[11px] text-muted sm:text-xs">
                   <tr>
                     <th className="px-2 py-2.5 sm:px-4 font-medium">{group === "month" ? "Month" : "Day"}</th>
-                    <th className="px-2 py-2.5 sm:px-4 text-right font-medium">Scans</th>
+                    <th className="hidden px-2 py-2.5 text-right font-medium sm:table-cell sm:px-4">Scans</th>
                     <th className="px-2 py-2.5 sm:px-4 text-right font-medium">Happy</th>
                     <th className="px-2 py-2.5 sm:px-4 text-right font-medium">Unhappy</th>
                     <th className="px-2 py-2.5 sm:px-4 text-right font-medium">
@@ -229,8 +229,10 @@ export default function ActivityTable() {
                         <td className="px-2.5 py-2.5 whitespace-nowrap sm:px-4">
                           <span className="sm:hidden">{shortLabel(r.key)}</span>
                           <span className="hidden sm:inline">{label(r.key)}</span>
+                          {/* Phones: scans sit under the date, so every number fits in full. */}
+                          <span className="block text-[11px] text-muted sm:hidden">{fmtNum(r.scans)} scans</span>
                         </td>
-                        <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(r.scans)}</td>
+                        <td className="hidden px-2 py-2.5 text-right sm:table-cell sm:px-4">{fmtNum(r.scans)}</td>
                         <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(r.happy)}</td>
                         <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(r.unhappy)}</td>
                         <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(r.google)}</td>
@@ -243,8 +245,9 @@ export default function ActivityTable() {
                     <tr>
                       <td className="px-2 py-2.5 sm:px-4">
                         Total<span className="hidden sm:inline"> ({periodName.toLowerCase()})</span>
+                        <span className="block text-[11px] font-normal text-muted sm:hidden">{fmtNum(data.totals.scans)} scans</span>
                       </td>
-                      <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(data.totals.scans)}</td>
+                      <td className="hidden px-2 py-2.5 text-right sm:table-cell sm:px-4">{fmtNum(data.totals.scans)}</td>
                       <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(data.totals.happy)}</td>
                       <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(data.totals.unhappy)}</td>
                       <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(data.totals.google)}</td>

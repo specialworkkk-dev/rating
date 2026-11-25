@@ -9,6 +9,7 @@ const ShopMonthSchema = new mongoose.Schema(
     month: { type: String, required: true }, // "YYYY-MM"
     happy: { type: Number, default: 0 },
     unhappy: { type: Number, default: 0 },
+    stars: { type: Number, default: 0 }, // sum of all star values, for the average
     google: { type: Number, default: 0 },
     scans: { type: Number, default: 0 },
   },

@@ -19,9 +19,9 @@ const ShopTotalsSchema = new mongoose.Schema(
     recomputedAt: Date,
     // True once this shop's per-month counts (ShopMonth) were built from an
     // exact recount; until then the monthly chart builds them first.
-    monthsReady: { type: Boolean, default: false },
+    monthsReady: { type: Number, default: 0 }, // = ROLLUP_VERSION once built
     // Same for the per-day counts (ShopDay).
-    daysReady: { type: Boolean, default: false },
+    daysReady: { type: Number, default: 0 }, // = ROLLUP_VERSION once built
   },
   { versionKey: false, timestamps: { createdAt: false, updatedAt: true } }
 );

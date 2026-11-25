@@ -17,7 +17,8 @@ const compactFmt = new Intl.NumberFormat("en-IN", { notation: "compact", maximum
 // Keys are "YYYY-MM-DD" for days and "YYYY-MM" for months.
 const parse = (d) => new Date(d.length === 7 ? `${d}-01T00:00:00Z` : `${d}T00:00:00Z`);
 // Axis ticks stay short: 1,500 → "1,500"; 25,000 → "25K"; 2,00,000 → "2L".
-const tickLabel = (n) => (n >= 10000 ? compactFmt.format(n) : fmtNum(n));
+// One style per axis: if the top tick needs "K"/"L", every tick uses it.
+const tickLabelFor = (top) => (n) => (top >= 10000 ? compactFmt.format(n) : fmtNum(n));
 
 /** Clean axis maximum and step: 1, 2 or 5 × 10^k, at most 4 intervals. */
 function niceScale(max) {
@@ -32,7 +33,7 @@ function niceScale(max) {
  * Ratings per day (or per month for long periods), stacked happy vs unhappy,
  * so one bar shows how many customers rated and how happy they were.
  */
-export default function ActivityChart({ series, title, unit = "day", heading }) {
+export default function ActivityChart({ series, title, unit = "day", heading, showAverage = false }) {
   const monthly = unit === "month";
   const nameOf = (d) => (monthly ? monthLongFmt.format(parse(d.date)) : dayFmt.format(parse(d.date)));
   const [hover, setHover] = useState(null);
@@ -43,6 +44,9 @@ export default function ActivityChart({ series, title, unit = "day", heading }) 
   );
   const max = Math.max(...series.map((d) => d.ratings));
   const { top, step } = niceScale(max);
+  // Average per day (or month) over the whole period, zero days included.
+  const avg = series.length ? (totals.happy + totals.unhappy) / series.length : 0;
+  const tickLabel = tickLabelFor(top);
   const ticks = [];
   for (let v = 0; v <= top; v += step) ticks.push(v);
   const short = !monthly && series.length <= 7;
@@ -94,6 +98,14 @@ export default function ActivityChart({ series, title, unit = "day", heading }) 
                   style={{ bottom: `${(t / top) * 100}%` }}
                 />
               ))}
+              {/* Average reference line: was a day busier than normal? */}
+              {showAverage && max > 0 && avg > 0 && (
+                <span className="absolute inset-x-0 z-[1] border-t-2 border-dashed border-stone-500/70" style={{ bottom: `${(avg / top) * 100}%` }}>
+                  <span className="absolute left-0 bottom-1 rounded-md bg-white/90 px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap text-stone-600 shadow-sm ring-1 ring-stone-200">
+                    Avg {fmtNum(Math.round(avg))}/{monthly ? "month" : "day"}
+                  </span>
+                </span>
+              )}
             </div>
             {/* Columns */}
             <div className="relative flex h-48 items-end" onMouseLeave={() => setHover(null)}>
@@ -113,7 +125,7 @@ export default function ActivityChart({ series, title, unit = "day", heading }) 
                   >
                     <span className={`absolute inset-0 rounded-md ${hover === i ? "bg-stone-100" : ""}`} />
                     {/* Stack: unhappy on top of happy, 2px surface gap, 4px rounded data-end */}
-                    <span className="relative flex w-[60%] max-w-6 flex-col justify-end gap-0.5" style={{ height: `${hH + uH}%` }}>
+                    <span className="relative flex w-[70%] min-w-[3px] max-w-6 flex-col justify-end gap-0.5" style={{ height: `${hH + uH}%` }}>
                       {d.unhappy > 0 && (
                         <span className="w-full rounded-t" style={{ height: `${(uH / (hH + uH)) * 100}%`, backgroundColor: UNHAPPY, minHeight: 2 }} />
                       )}

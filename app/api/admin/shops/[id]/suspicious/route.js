@@ -35,6 +35,7 @@ export async function DELETE(req, { params }) {
   for (const r of removed) {
     const m = (byDay[istDayKey(r.createdAt)] ??= { date: r.createdAt, inc: {} });
     m.inc[moodOf(r.stars)] = (m.inc[moodOf(r.stars)] || 0) - 1;
+    m.inc.stars = (m.inc.stars || 0) - r.stars;
     if (r.clickedGoogle) m.inc.google = (m.inc.google || 0) - 1;
   }
   for (const { date, inc: dayInc } of Object.values(byDay)) await bumpPeriods(id, date, dayInc);

@@ -2,6 +2,7 @@ import Link from "next/link";
 import ActivityChart from "@/components/ActivityChart";
 import ActivityTable from "@/components/ActivityTable";
 import PausedNotice from "@/components/PausedNotice";
+import PeriodSummary from "@/components/PeriodSummary";
 import { card } from "@/components/ui";
 import { BRAND } from "@/lib/brand";
 import { getOwnerContext } from "@/lib/ownerContext";
@@ -60,7 +61,10 @@ export default async function DailyRatingsPage({ searchParams }) {
         </div>
       </div>
 
+      <PeriodSummary series={series} unit={monthly ? "month" : "day"} />
+
       <ActivityChart
+        showAverage
         heading={monthly ? "Ratings per month" : "Ratings per day"}
         series={series}
         unit={monthly ? "month" : "day"}

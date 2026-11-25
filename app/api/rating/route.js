@@ -78,13 +78,14 @@ export async function POST(req) {
   // rating moves one count from the old star level to the new one.
   if (previousStars === null) {
     await bumpTotals(shop._id, { ratings: 1, [`stars.${n}`]: 1 });
-    await bumpPeriods(shop._id, createdAt, { [moodOf(n)]: 1 });
+    await bumpPeriods(shop._id, createdAt, { [moodOf(n)]: 1, stars: n });
   } else if (previousStars !== n) {
     await bumpTotals(shop._id, { [`stars.${previousStars}`]: -1, [`stars.${n}`]: 1 });
-    // The rating stays in the month it was first given; only its mood may change.
-    if (moodOf(previousStars) !== moodOf(n)) {
-      await bumpPeriods(shop._id, createdAt, { [moodOf(previousStars)]: -1, [moodOf(n)]: 1 });
-    }
+    // The rating stays in the day/month it was first given; its stars (and
+    // maybe its mood) change there.
+    const inc = { stars: n - previousStars };
+    if (moodOf(previousStars) !== moodOf(n)) Object.assign(inc, { [moodOf(previousStars)]: -1, [moodOf(n)]: 1 });
+    await bumpPeriods(shop._id, createdAt, inc);
   }
 
   return Response.json({
