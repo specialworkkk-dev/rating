@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 /**
  * Header navigation. `variant="bar"` is the inline version (tablet/desktop);
  * `variant="tabs"` is the full-width second row on phones.
- * Each link: { href, label, exact?, badge? }.
+ * Each link: { href, label, exact?, badge?, activeFor? }. `activeFor` lists the
+ * paths (and their sub-pages) where the link counts as the current one.
  */
 export default function NavLinks({ links, variant = "bar" }) {
   const pathname = usePathname();
@@ -16,7 +17,8 @@ export default function NavLinks({ links, variant = "bar" }) {
   return (
     <nav className={tabs ? "flex" : "flex items-center gap-1 text-sm"} aria-label="Sections">
       {links.map((l) => {
-        const active = l.exact ? pathname === l.href : pathname === l.href || pathname.startsWith(`${l.href}/`);
+        const under = (p) => pathname === p || pathname.startsWith(`${p}/`);
+        const active = (l.exact ? pathname === l.href : under(l.href)) || Boolean(l.activeFor?.some(under));
         return (
           <Link
             key={l.href}

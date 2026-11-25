@@ -9,6 +9,7 @@ import { formatINR } from "@/lib/pricing";
 import { isShopActive } from "@/lib/shop";
 import { adminShop } from "@/lib/shopInput";
 import { getSpikesByShop } from "@/lib/spike";
+import { getServiceAlerts } from "@/lib/services";
 import { getActivityByShop, getBurstCountsByShop } from "@/lib/stats";
 import Shop from "@/models/Shop";
 import User from "@/models/User";
@@ -34,11 +35,12 @@ const SORTERS = {
 export default async function AdminHome({ searchParams }) {
   await requirePageRole("admin");
 
-  const [docs, activity, bursts, spikes] = await Promise.all([
+  const [docs, activity, bursts, spikes, serviceAlerts] = await Promise.all([
     Shop.find().sort({ createdAt: -1 }).lean(),
     getActivityByShop(30),
     getBurstCountsByShop(),
     getSpikesByShop(),
+    getServiceAlerts(),
   ]);
   const owners = await User.find({ _id: { $in: docs.map((s) => s.ownerId).filter(Boolean) } })
     .select("name email")
@@ -89,6 +91,16 @@ export default async function AdminHome({ searchParams }) {
 
   return (
     <div className="space-y-5">
+      {serviceAlerts.length > 0 && (
+        <Link
+          href="/app/admin/services"
+          className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl bg-amber-50 p-4 text-sm text-amber-950 ring-1 ring-amber-200 hover:ring-amber-400"
+        >
+          <span className="font-semibold">⚠ Services need attention:</span>
+          <span className="min-w-0 flex-1">{serviceAlerts.join(" · ")}</span>
+          <span className="font-semibold underline">See Services →</span>
+        </Link>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Summary label="Paying shops" value={paying} />
         <Summary label="On trial" value={trials} />
