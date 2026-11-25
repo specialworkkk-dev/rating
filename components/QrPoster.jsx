@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import CopyButton from "./CopyButton";
 import { btnPrimary, btnSecondary, card } from "./ui";
 
@@ -19,6 +19,18 @@ export default function QrPoster({ endpoint, ratingUrl, version = "" }) {
   const [size, setSize] = useState("a5");
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const imgRef = useRef(null);
+  const previewSrc = `${endpoint}?format=png&preview=1&v=${encodeURIComponent(version)}`;
+
+  // The image can finish loading before React attaches onLoad (fast or cached
+  // responses), and then onLoad never fires. Check the element directly too.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img?.complete) {
+      if (img.naturalWidth > 0) setLoaded(true);
+      else setFailed(true);
+    }
+  }, [previewSrc]);
   const nfcUrl = `${ratingUrl}?src=nfc`;
   const v = encodeURIComponent(version);
 
@@ -34,7 +46,8 @@ export default function QrPoster({ endpoint, ratingUrl, version = "" }) {
           {!failed && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={`${endpoint}?format=png&preview=1&v=${v}`}
+              ref={imgRef}
+              src={previewSrc}
               alt="QR poster preview"
               className={`size-full object-contain transition-opacity ${loaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setLoaded(true)}
