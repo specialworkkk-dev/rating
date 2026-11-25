@@ -1,7 +1,11 @@
+import AnimatedBar from "./AnimatedBar";
 import CountUp from "./CountUp";
-import RatingsDonut from "./RatingsDonut";
 import Sparkline from "./Sparkline";
 import { card } from "./ui";
+
+// Diverging scale (validated): blue for happy, neutral grey midpoint, red for
+// unhappy. Readable with colour blindness, unlike green-to-red.
+const STAR_COLORS = { 5: "#1c5cab", 4: "#5598e7", 3: "#aeaba4", 2: "#e66767", 1: "#c23434" };
 
 const pct = (part, whole) => (whole ? (part / whole) * 100 : 0);
 
@@ -47,6 +51,28 @@ function Stat({ icon, tone, label, children, hint, trend, trendLabel }) {
       </div>
       {hint && <p className="text-xs text-muted">{hint}</p>}
     </div>
+  );
+}
+
+/** Five stars, filled proportionally to the average (e.g. 3.5 → three and a half). */
+function StarMeter({ value }) {
+  const fill = value == null ? 0 : (value / 5) * 100;
+  const row = (cls) => (
+    <span className={`flex gap-0.5 ${cls}`}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <svg key={i} viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true">
+          <path d={ICONS.star} fill="currentColor" />
+        </svg>
+      ))}
+    </span>
+  );
+  return (
+    <span className="relative inline-block" aria-label={value == null ? "No ratings" : `${value} out of 5`}>
+      {row("text-stone-200")}
+      <span className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${fill}%` }}>
+        {row("text-brand-500")}
+      </span>
+    </span>
   );
 }
 
@@ -103,11 +129,55 @@ export default function StatsCards({ stats, series = [] }) {
       </div>
 
       <section className={card}>
-        <div className="mb-6 flex flex-wrap items-baseline gap-x-3">
-          <h2 className="font-semibold">Ratings breakdown</h2>
-          <p className="text-sm text-muted">How customers rated you in this period</p>
+        <h2 className="font-semibold">Ratings breakdown</h2>
+        <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-center">
+          <div className="flex shrink-0 flex-col items-center justify-center rounded-2xl bg-stone-50 px-8 py-5 text-center sm:w-48">
+            <p className="text-5xl font-bold tracking-tight">
+              {stats.average == null ? (
+                <span className="text-stone-300">—</span>
+              ) : (
+                <CountUp value={stats.average} decimals={1} />
+              )}
+            </p>
+            <div className="mt-2">
+              <StarMeter value={stats.average} />
+            </div>
+            <p className="mt-1.5 text-sm text-muted">
+              <CountUp value={stats.ratings} /> {stats.ratings === 1 ? "rating" : "ratings"}
+            </p>
+          </div>
+
+          <ul className="min-w-0 flex-1 space-y-3">
+            {[5, 4, 3, 2, 1].map((s, i) => {
+              const n = stats.breakdown[s];
+              const p = pct(n, stats.ratings);
+              return (
+                <li key={s} className="flex items-center gap-3 text-sm">
+                  <span className="flex w-7 shrink-0 items-center gap-0.5 font-medium tabular-nums">
+                    {s}
+                    <svg viewBox="0 0 24 24" className="size-3.5" aria-hidden="true">
+                      <path d={ICONS.star} fill={STAR_COLORS[s]} />
+                    </svg>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <AnimatedBar
+                      percent={p}
+                      color={STAR_COLORS[s]}
+                      delay={i * 90}
+                      label={`${s} star: ${n} ratings, ${Math.round(p)}%`}
+                    />
+                  </span>
+                  <span className="w-8 shrink-0 text-right font-medium tabular-nums">
+                    <CountUp value={n} delay={i * 90} />
+                  </span>
+                  <span className="w-11 shrink-0 text-right text-muted tabular-nums">
+                    <CountUp value={Math.round(p)} suffix="%" delay={i * 90} />
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-        <RatingsDonut breakdown={stats.breakdown} total={stats.ratings} average={stats.average ?? 0} />
       </section>
     </div>
   );
