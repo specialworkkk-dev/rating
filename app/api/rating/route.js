@@ -4,6 +4,7 @@ import { rememberDevice, resolveDeviceId } from "@/lib/deviceId";
 import { bad, readJson } from "@/lib/http";
 import { firstExceeded, getClientIp, hashIp, HOUR, MINUTE, tooMany } from "@/lib/rateLimit";
 import { googleReviewUrl, HAPPY_MIN_STARS, isShopActive } from "@/lib/shop";
+import { bumpTotals } from "@/lib/totals";
 import Rating from "@/models/Rating";
 import Shop from "@/models/Shop";
 
@@ -68,6 +69,11 @@ export async function POST(req) {
     userAgent: (req.headers.get("user-agent") || "").slice(0, 300),
   });
   rememberDevice(jar, deviceId);
+
+  // Keep the shop's all-time totals in step: a new rating adds one; a changed
+  // rating moves one count from the old star level to the new one.
+  if (previousStars === null) await bumpTotals(shop._id, { ratings: 1, [`stars.${n}`]: 1 });
+  else if (previousStars !== n) await bumpTotals(shop._id, { [`stars.${previousStars}`]: -1, [`stars.${n}`]: 1 });
 
   return Response.json({
     ratingId,

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { fmtNum } from "@/lib/format";
 
 /** Page numbers to show: first, last, current ±1, with gaps as null. */
 function pageList(page, pages) {
@@ -50,8 +51,8 @@ export default function Pagination({ page, pages, total, pageSize, hrefFor, onCh
   return (
     <nav className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-4" aria-label="Pagination">
       <p className="text-sm text-muted">
-        Showing <span className="font-medium text-ink tabular-nums">{from}–{to}</span> of{" "}
-        <span className="font-medium text-ink tabular-nums">{total}</span> {noun}
+        Showing <span className="font-medium text-ink tabular-nums">{fmtNum(from)}–{fmtNum(to)}</span> of{" "}
+        <span className="font-medium text-ink tabular-nums">{fmtNum(total)}</span> {noun}
       </p>
       {pages > 1 && (
         <div className="flex items-center gap-1">

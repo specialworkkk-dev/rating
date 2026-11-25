@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InboxIllustration } from "./illustrations";
+import { fmtNum } from "@/lib/format";
 import Pagination from "./Pagination";
 import { card, fmtDateTime } from "./ui";
 
@@ -95,7 +96,7 @@ export default function FeedbackList({ initial }) {
         {counts.unread > 0 && (
           <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">{counts.unread} new</span>
         )}
-        <span className="text-sm text-muted">{counts.all} total</span>
+        <span className="text-sm text-muted">{fmtNum(counts.all)} total</span>
       </div>
 
       {counts.all > 0 && (

@@ -18,7 +18,10 @@ const RatingSchema = new mongoose.Schema(
   { versionKey: false }
 );
 
-RatingSchema.index({ shopId: 1, createdAt: -1 });
+// Covering index for dashboard stats: shop + date range, with stars and the
+// Google tap stored in the index, so counting ratings never has to open the
+// documents themselves (fast even with lakhs of ratings per shop).
+RatingSchema.index({ shopId: 1, createdAt: -1, stars: 1, clickedGoogle: 1 });
 RatingSchema.index(
   { shopId: 1, deviceId: 1 },
   { unique: true, partialFilterExpression: { deviceId: { $type: "string" } } }

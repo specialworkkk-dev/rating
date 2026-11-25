@@ -10,11 +10,12 @@ import QrPoster from "@/components/QrPoster";
 import StatsCards from "@/components/StatsCards";
 import { card, fmtDate } from "@/components/ui";
 import { BRAND } from "@/lib/brand";
+import { fmtNum } from "@/lib/format";
 import { requirePageRole } from "@/lib/session";
 import { formatINR, shopPrice } from "@/lib/pricing";
 import { pauseReason } from "@/lib/shop";
 import { siteUrl } from "@/lib/site";
-import { countAllRatings, getDailySeries, getFeedbackPage, getShopStats, normalizeRange, sinceFor } from "@/lib/stats";
+import { hasAnyRating, getDailySeries, getFeedbackPage, getShopStats, normalizeRange, sinceFor } from "@/lib/stats";
 import Shop from "@/models/Shop";
 
 export const metadata = { title: `Dashboard · ${BRAND.name}` };
@@ -64,7 +65,7 @@ export default async function DashboardPage({ searchParams }) {
     getFeedbackPage(shop._id),
     siteUrl(),
     getDailySeries(shop._id, chartDays),
-    countAllRatings(shop._id),
+    hasAnyRating(shop._id),
   ]);
   const ratingUrl = `${base}/r/${shop.slug}`;
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
@@ -77,8 +78,8 @@ export default async function DashboardPage({ searchParams }) {
 
   const period = { 7: "In the last 7 days", 30: "In the last 30 days", all: "So far" }[range];
   const summary = stats.ratings
-    ? `${period}, ${stats.ratings} ${stats.ratings === 1 ? "customer" : "customers"} rated you ${stats.average.toFixed(1)}★, ${stats.googleClicks} went on to Google${
-        stats.unreadFeedback ? `, and you have ${stats.unreadFeedback} unread ${stats.unreadFeedback === 1 ? "message" : "messages"}` : ""
+    ? `${period}, ${fmtNum(stats.ratings)} ${stats.ratings === 1 ? "customer" : "customers"} rated you ${stats.average.toFixed(1)}★, ${fmtNum(stats.googleClicks)} went on to Google${
+        stats.unreadFeedback ? `, and you have ${fmtNum(stats.unreadFeedback)} unread ${stats.unreadFeedback === 1 ? "message" : "messages"}` : ""
       }.`
     : everRated
       ? `${period}, no new ratings yet. Make sure your QR poster is easy to see.`
@@ -91,7 +92,7 @@ export default async function DashboardPage({ searchParams }) {
         <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} />
 
         {!shop.rulesAcceptedAt && <FairRulesAgree />}
-        {everRated === 0 && <GettingStarted />}
+        {!everRated && <GettingStarted />}
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
           <h2 className="text-lg font-semibold">Overview</h2>

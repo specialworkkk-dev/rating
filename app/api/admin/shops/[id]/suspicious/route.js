@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { bad, readJson } from "@/lib/http";
 import { requireApiRole } from "@/lib/session";
 import Feedback from "@/models/Feedback";
+import { bumpTotals } from "@/lib/totals";
 import Rating from "@/models/Rating";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -20,10 +21,16 @@ export async function DELETE(req, { params }) {
   }
 
   const query = { shopId: id, ipHash, createdAt: { $gte: start, $lt: new Date(start.getTime() + HOUR_MS) } };
-  const ids = (await Rating.find(query).select("_id").lean()).map((r) => r._id);
+  const removed = await Rating.find(query).select("_id stars clickedGoogle").lean();
+  const ids = removed.map((r) => r._id);
   const [ratings, feedback] = await Promise.all([
     Rating.deleteMany({ _id: { $in: ids } }),
     Feedback.deleteMany({ ratingId: { $in: ids } }),
   ]);
+  // Take the removed ratings back out of the shop's all-time totals.
+  const inc = { ratings: -ratings.deletedCount, google: -removed.filter((r) => r.clickedGoogle).length };
+  for (const r of removed) inc[`stars.${r.stars}`] = (inc[`stars.${r.stars}`] || 0) - 1;
+  await bumpTotals(id, inc);
+
   return Response.json({ removedRatings: ratings.deletedCount, removedFeedback: feedback.deletedCount });
 }

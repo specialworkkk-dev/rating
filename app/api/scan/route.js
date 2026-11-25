@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/db";
 import { bad, readJson } from "@/lib/http";
 import { getClientIp, hashIp, MINUTE, rateLimit, tooMany } from "@/lib/rateLimit";
 import { isShopActive } from "@/lib/shop";
+import { bumpTotals } from "@/lib/totals";
 import Scan from "@/models/Scan";
 import Shop from "@/models/Shop";
 
@@ -18,5 +19,6 @@ export async function POST(req) {
   if (!isShopActive(shop)) return Response.json({ ok: false, paused: true });
 
   await Scan.create({ shopId: shop._id, source: source === "nfc" ? "nfc" : "qr" });
+  await bumpTotals(shop._id, { scans: 1 });
   return Response.json({ ok: true });
 }

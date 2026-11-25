@@ -4,6 +4,7 @@ import Pagination from "@/components/Pagination";
 import StatusBadge from "@/components/StatusBadge";
 import { btnPrimary, card, fmtDate } from "@/components/ui";
 import { requirePageRole } from "@/lib/session";
+import { fmtNum } from "@/lib/format";
 import { formatINR } from "@/lib/pricing";
 import { isShopActive } from "@/lib/shop";
 import { adminShop } from "@/lib/shopInput";
@@ -194,7 +195,7 @@ function Metric({ label, value }) {
   return (
     <div className="text-center">
       <dt className="text-xs text-muted">{label}</dt>
-      <dd className="font-semibold tabular-nums">{value}</dd>
+      <dd className="font-semibold tabular-nums">{fmtNum(value)}</dd>
     </div>
   );
 }

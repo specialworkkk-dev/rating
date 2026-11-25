@@ -1,6 +1,7 @@
 import AnimatedBar from "./AnimatedBar";
 import CountUp from "./CountUp";
 import Sparkline from "./Sparkline";
+import { fmtNum, fmtShare } from "@/lib/format";
 import { card } from "./ui";
 
 // Diverging scale (validated): blue for happy, neutral grey midpoint, red for
@@ -8,6 +9,7 @@ import { card } from "./ui";
 const STAR_COLORS = { 5: "#1c5cab", 4: "#5598e7", 3: "#aeaba4", 2: "#e66767", 1: "#c23434" };
 
 const pct = (part, whole) => (whole ? (part / whole) * 100 : 0);
+const isLong = (n) => fmtNum(n).length > 7; // e.g. "5,00,000"
 
 const ICONS = {
   scan: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z",
@@ -34,7 +36,7 @@ function Icon({ name, tone }) {
   );
 }
 
-function Stat({ icon, tone, label, children, hint, trend, trendLabel }) {
+function Stat({ icon, tone, label, children, hint, trend, trendLabel, long = false }) {
   return (
     <div className={`${card} flex flex-col gap-3 p-4 sm:p-5`}>
       <div className="flex items-center justify-between gap-2">
@@ -42,7 +44,8 @@ function Stat({ icon, tone, label, children, hint, trend, trendLabel }) {
         <Icon name={icon} tone={tone} />
       </div>
       <div className="flex items-end justify-between gap-2">
-        <p className="text-3xl font-bold tracking-tight">{children}</p>
+        {/* Lakhs and crores get a slightly smaller size so they fit narrow cards. */}
+        <p className={`${long ? "text-2xl" : "text-3xl"} font-bold tracking-tight`}>{children}</p>
         {trend && (
           <span className="hidden sm:block">
             <Sparkline values={trend} label={trendLabel} />
@@ -89,7 +92,7 @@ export default function StatsCards({ stats, series = [] }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon="scan" tone="bg-sky-50 text-sky-600" label="Scans" hint="QR / NFC opens" trend={trend("scans")} trendLabel="Scans per day">
+        <Stat icon="scan" tone="bg-sky-50 text-sky-600" label="Scans" hint="QR / NFC opens" trend={trend("scans")} trendLabel="Scans per day" long={isLong(stats.scans)}>
           <CountUp value={stats.scans} />
         </Stat>
         <Stat
@@ -99,6 +102,7 @@ export default function StatsCards({ stats, series = [] }) {
           hint={stats.scans ? `${ratedOfScans}% of scans rated` : "No scans yet"}
           trend={trend("ratings")}
           trendLabel="Ratings per day"
+          long={isLong(stats.ratings)}
         >
           <CountUp value={stats.ratings} />
         </Stat>
@@ -106,7 +110,7 @@ export default function StatsCards({ stats, series = [] }) {
           icon="avg"
           tone="bg-emerald-50 text-emerald-600"
           label="Average"
-          hint={stats.ratings ? `${happy} happy · ${stats.unhappy} unhappy` : "No ratings yet"}
+          hint={stats.ratings ? `${fmtNum(happy)} happy · ${fmtNum(stats.unhappy)} unhappy` : "No ratings yet"}
         >
           {stats.average == null ? (
             <span className="text-stone-300">—</span>
@@ -123,6 +127,7 @@ export default function StatsCards({ stats, series = [] }) {
           hint={stats.ratings ? `${googleOfRatings}% of ratings` : "Tapped “Post on Google”"}
           trend={trend("google")}
           trendLabel="Sent to Google per day"
+          long={isLong(stats.googleClicks)}
         >
           <CountUp value={stats.googleClicks} />
         </Stat>
@@ -151,6 +156,7 @@ export default function StatsCards({ stats, series = [] }) {
             {[5, 4, 3, 2, 1].map((s, i) => {
               const n = stats.breakdown[s];
               const p = pct(n, stats.ratings);
+              const share = fmtShare(n, stats.ratings);
               return (
                 <li key={s} className="flex items-center gap-3 text-sm">
                   <span className="flex w-7 shrink-0 items-center gap-0.5 font-medium tabular-nums">
@@ -161,17 +167,18 @@ export default function StatsCards({ stats, series = [] }) {
                   </span>
                   <span className="min-w-0 flex-1">
                     <AnimatedBar
-                      percent={p}
+                      // A real count never disappears: tiny shares keep a sliver of bar.
+                      percent={n > 0 ? Math.max(p, 0.6) : 0}
                       color={STAR_COLORS[s]}
                       delay={i * 90}
-                      label={`${s} star: ${n} ratings, ${Math.round(p)}%`}
+                      label={`${s} star: ${fmtNum(n)} ratings, ${share}`}
                     />
                   </span>
-                  <span className="w-8 shrink-0 text-right font-medium tabular-nums">
+                  <span className="w-16 shrink-0 text-right font-medium tabular-nums sm:w-20">
                     <CountUp value={n} delay={i * 90} />
                   </span>
                   <span className="w-11 shrink-0 text-right text-muted tabular-nums">
-                    <CountUp value={Math.round(p)} suffix="%" delay={i * 90} />
+                    {/^[<>]/.test(share) ? share : <CountUp value={Math.round(p)} suffix="%" delay={i * 90} />}
                   </span>
                 </li>
               );
