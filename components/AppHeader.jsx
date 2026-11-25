@@ -3,6 +3,7 @@ import { BRAND } from "@/lib/brand";
 import AccountMenu from "./AccountMenu";
 import BrandMark from "./BrandMark";
 import HeaderShell from "./HeaderShell";
+import InstallBanner from "./InstallBanner";
 import NavLinks from "./NavLinks";
 
 function shopInitials(name) {
@@ -20,6 +21,7 @@ function shopInitials(name) {
  */
 export default function AppHeader({ user, shop = null, title = "", badge = 0, links = [], showBell = true }) {
   return (
+    <>
     <HeaderShell>
       <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2.5 rounded-lg" aria-label={`${BRAND.name} home`}>
@@ -87,5 +89,7 @@ export default function AppHeader({ user, shop = null, title = "", badge = 0, li
         </div>
       )}
     </HeaderShell>
+    <InstallBanner />
+    </>
   );
 }
