@@ -1,5 +1,6 @@
 import { bad, readJson } from "@/lib/http";
 import { requireApiRole } from "@/lib/session";
+import { clearShopCache } from "@/lib/shopCache";
 import { adminShop, parseShopInput } from "@/lib/shopInput";
 import Shop from "@/models/Shop";
 import User from "@/models/User";
@@ -33,6 +34,7 @@ export async function POST(req) {
 
   try {
     const shop = await Shop.create(data);
+    clearShopCache(shop.slug); // a "not found" for this link may have been cached
     return Response.json({ shop: adminShop(shop.toObject()) }, { status: 201 });
   } catch (err) {
     if (err?.code === 11000) return bad("That link name is already taken", 409);

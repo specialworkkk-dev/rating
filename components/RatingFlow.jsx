@@ -5,10 +5,15 @@ import { getStoredDeviceId, storeDeviceId } from "@/lib/clientDevice";
 import FeedbackForm from "./FeedbackForm";
 import GoogleReviewLink from "./GoogleReviewLink";
 import StarRating from "./StarRating";
+import Unavailable from "@/app/r/[slug]/Unavailable";
 
-function useLogScan(slug, source) {
+const sourceFromUrl = () => (new URLSearchParams(window.location.search).get("src") === "nfc" ? "nfc" : "qr");
+
+function useLogScan(slug) {
   useEffect(() => {
-    // Count a scan once per browser session, not on every reload.
+    // Count a scan once per browser session, not on every reload. The source
+    // is read here, from the address, so NFC taps are never logged as QR.
+    const source = sourceFromUrl();
     const key = `rb_scan_${slug}`;
     try {
       if (sessionStorage.getItem(key)) return;
@@ -20,7 +25,7 @@ function useLogScan(slug, source) {
       body: JSON.stringify({ slug, source }),
       keepalive: true,
     }).catch(() => {});
-  }, [slug, source]);
+  }, [slug]);
 }
 
 function GoogleG() {
@@ -34,8 +39,18 @@ function GoogleG() {
   );
 }
 
-export default function RatingFlow({ shop, source }) {
-  useLogScan(shop.slug, source);
+/** "nfc" when opened from an NFC card (?src=nfc), else "qr". Read in the browser so the page can be cached. */
+function useSource() {
+  const [source, setSource] = useState("qr");
+  useEffect(() => {
+    setSource(sourceFromUrl());
+  }, []);
+  return source;
+}
+
+export default function RatingFlow({ shop }) {
+  const source = useSource();
+  useLogScan(shop.slug);
 
   const [stars, setStars] = useState(0);
   const [step, setStep] = useState("rate"); // rate | google | feedback | thanks
@@ -58,6 +73,12 @@ export default function RatingFlow({ shop, source }) {
         body: JSON.stringify({ slug: shop.slug, stars: n, source, deviceId: getStoredDeviceId() }),
       });
       const json = await res.json().catch(() => ({}));
+      // The page may be cached for up to an hour; the server always knows the
+      // live status. If the shop was paused meanwhile, say so politely.
+      if (res.status === 403) {
+        setStep("unavailable");
+        return;
+      }
       if (!res.ok) throw new Error(json.error || "Couldn’t save your rating. Please try again.");
       setRatingId(json.ratingId);
       storeDeviceId(json.deviceId);
@@ -119,6 +140,10 @@ export default function RatingFlow({ shop, source }) {
       </button>
     </p>
   );
+
+  if (step === "unavailable") {
+    return <Unavailable shopName={shop.name} />;
+  }
 
   if (step === "thanks") {
     return (

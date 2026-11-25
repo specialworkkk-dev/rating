@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { bad, readJson } from "@/lib/http";
 import { requireApiRole } from "@/lib/session";
+import { clearShopCache } from "@/lib/shopCache";
 import { addMonths, adminShop, parseShopInput } from "@/lib/shopInput";
 import Shop from "@/models/Shop";
 import User from "@/models/User";
@@ -15,6 +16,7 @@ export async function PATCH(req, { params }) {
   if (!shop) return bad("Shop not found", 404);
 
   const body = await readJson(req);
+  const oldSlug = shop.slug;
 
   // Shortcut for "customer paid": activate and extend from today or the
   // current paid-until date, whichever is later.
@@ -36,6 +38,9 @@ export async function PATCH(req, { params }) {
     if (err?.code === 11000) return bad("That link name is already taken", 409);
     throw err;
   }
+
+  // Customers' rating page must reflect the change right away (both links if renamed).
+  clearShopCache(oldSlug, shop.slug);
 
   const owner = shop.ownerId ? await User.findById(shop.ownerId).select("name email").lean() : null;
   return Response.json({ shop: adminShop(shop.toObject(), owner) });
