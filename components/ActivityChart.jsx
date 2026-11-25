@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { fmtNum } from "@/lib/format";
+import ActivityTable from "./ActivityTable";
 import { ChartEmptyIllustration } from "./illustrations";
 import { card } from "./ui";
 
@@ -170,39 +171,21 @@ export default function ActivityChart({ series, title, unit = "day" }) {
         </div>
       )}
 
-      {max > 0 && (
-        <div className="mt-4 border-t border-stone-100 pt-3">
-          <button type="button" onClick={() => setTable((v) => !v)} className="text-sm font-medium text-stone-600 hover:text-ink">
-            {table ? "Hide table" : "Show as table"}
-          </button>
-          {table && (
-            <div className="mt-3 max-h-64 overflow-auto">
-              <table className="w-full text-sm tabular-nums">
-                <thead className="sticky top-0 bg-white text-left text-xs text-muted">
-                  <tr>
-                    <th className="py-1.5 font-medium">{monthly ? "Month" : "Day"}</th>
-                    <th className="py-1.5 text-right font-medium">Scans</th>
-                    <th className="py-1.5 text-right font-medium">Happy</th>
-                    <th className="py-1.5 text-right font-medium">Unhappy</th>
-                    <th className="py-1.5 text-right font-medium">To Google</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-100">
-                  {[...series].reverse().map((d) => (
-                    <tr key={d.date}>
-                      <td className="py-1.5">{nameOf(d)}</td>
-                      <td className="py-1.5 text-right">{fmtNum(d.scans)}</td>
-                      <td className="py-1.5 text-right">{fmtNum(d.happy)}</td>
-                      <td className="py-1.5 text-right">{fmtNum(d.unhappy)}</td>
-                      <td className="py-1.5 text-right">{fmtNum(d.google)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+      <div className="mt-4 border-t border-stone-100 pt-3">
+        <button
+          type="button"
+          onClick={() => setTable((v) => !v)}
+          aria-expanded={table}
+          className="text-sm font-medium text-stone-600 hover:text-ink"
+        >
+          {table ? "Hide detailed figures" : "Show detailed figures"}
+        </button>
+        {table && (
+          <div className="mt-4">
+            <ActivityTable />
+          </div>
+        )}
+      </div>
     </section>
   );
 }

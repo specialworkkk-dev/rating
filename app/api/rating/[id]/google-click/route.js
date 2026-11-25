@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import { bad } from "@/lib/http";
 import { getClientIp, hashIp, MINUTE, rateLimit, tooMany } from "@/lib/rateLimit";
-import { bumpMonth, bumpTotals } from "@/lib/totals";
+import { bumpPeriods, bumpTotals } from "@/lib/totals";
 import Rating from "@/models/Rating";
 
 export async function POST(req, { params }) {
@@ -21,7 +21,7 @@ export async function POST(req, { params }) {
   );
   if (first) {
     await bumpTotals(first.shopId, { google: 1 });
-    await bumpMonth(first.shopId, first.createdAt, { google: 1 });
+    await bumpPeriods(first.shopId, first.createdAt, { google: 1 });
   }
   else if (!(await Rating.exists({ _id: id }))) return bad("Rating not found", 404);
   return Response.json({ ok: true });

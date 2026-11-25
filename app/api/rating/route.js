@@ -4,7 +4,7 @@ import { rememberDevice, resolveDeviceId } from "@/lib/deviceId";
 import { bad, readJson } from "@/lib/http";
 import { firstExceeded, getClientIp, hashIp, HOUR, MINUTE, tooMany } from "@/lib/rateLimit";
 import { googleReviewUrl, HAPPY_MIN_STARS, isShopActive } from "@/lib/shop";
-import { bumpMonth, bumpTotals, moodOf } from "@/lib/totals";
+import { bumpPeriods, bumpTotals, moodOf } from "@/lib/totals";
 import Rating from "@/models/Rating";
 import Shop from "@/models/Shop";
 
@@ -78,12 +78,12 @@ export async function POST(req) {
   // rating moves one count from the old star level to the new one.
   if (previousStars === null) {
     await bumpTotals(shop._id, { ratings: 1, [`stars.${n}`]: 1 });
-    await bumpMonth(shop._id, createdAt, { [moodOf(n)]: 1 });
+    await bumpPeriods(shop._id, createdAt, { [moodOf(n)]: 1 });
   } else if (previousStars !== n) {
     await bumpTotals(shop._id, { [`stars.${previousStars}`]: -1, [`stars.${n}`]: 1 });
     // The rating stays in the month it was first given; only its mood may change.
     if (moodOf(previousStars) !== moodOf(n)) {
-      await bumpMonth(shop._id, createdAt, { [moodOf(previousStars)]: -1, [moodOf(n)]: 1 });
+      await bumpPeriods(shop._id, createdAt, { [moodOf(previousStars)]: -1, [moodOf(n)]: 1 });
     }
   }
 
