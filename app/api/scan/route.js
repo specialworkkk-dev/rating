@@ -5,6 +5,7 @@ import { isShopActive } from "@/lib/shop";
 import { bumpPeriods, bumpTotals } from "@/lib/totals";
 import Scan from "@/models/Scan";
 import Shop from "@/models/Shop";
+import { isOwnerOfShop } from "@/lib/viewer";
 
 export async function POST(req) {
   const rl = await rateLimit(`scan:${hashIp(getClientIp(req))}`, { limit: 60, windowMs: 10 * MINUTE });
@@ -17,6 +18,9 @@ export async function POST(req) {
   const shop = await Shop.findOne({ slug: slug.toLowerCase() }).lean();
   if (!shop) return bad("Shop not found", 404);
   if (!isShopActive(shop)) return Response.json({ ok: false, paused: true });
+
+  // The owner opening their own rating page is not a customer scan.
+  if (await isOwnerOfShop(shop._id)) return Response.json({ ok: true, ignored: "own_shop" });
 
   await Scan.create({ shopId: shop._id, source: source === "nfc" ? "nfc" : "qr" });
   await bumpTotals(shop._id, { scans: 1 });

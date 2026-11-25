@@ -5,6 +5,7 @@ import { bad, readJson } from "@/lib/http";
 import { firstExceeded, getClientIp, hashIp, HOUR, MINUTE, tooMany } from "@/lib/rateLimit";
 import { googleReviewUrl, HAPPY_MIN_STARS, isShopActive } from "@/lib/shop";
 import { bumpPeriods, bumpTotals, moodOf } from "@/lib/totals";
+import { isOwnerOfShop } from "@/lib/viewer";
 import Rating from "@/models/Rating";
 import Shop from "@/models/Shop";
 
@@ -51,6 +52,14 @@ export async function POST(req) {
   const shop = await Shop.findOne({ slug: body.slug.toLowerCase() }).lean();
   if (!shop) return bad("Shop not found", 404);
   if (!isShopActive(shop)) return bad("This shop's rating page is paused", 403);
+
+  // The owner may not rate their own shop (Google removes self-reviews).
+  if (await isOwnerOfShop(shop._id)) {
+    return Response.json(
+      { error: "You’re logged in as the owner, so you can’t rate your own shop.", code: "own_shop" },
+      { status: 403 }
+    );
+  }
 
   const jar = await cookies();
   const deviceId = resolveDeviceId(jar, body.deviceId);

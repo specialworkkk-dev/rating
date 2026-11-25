@@ -5,12 +5,14 @@ import FairRulesAgree from "@/components/FairRulesAgree";
 import GettingStarted from "@/components/GettingStarted";
 import PausedNotice from "@/components/PausedNotice";
 import QrPoster from "@/components/QrPoster";
+import SpikeWarning from "@/components/SpikeWarning";
 import StatsCards from "@/components/StatsCards";
 import { card, fmtDate } from "@/components/ui";
 import { BRAND } from "@/lib/brand";
 import { POSTER_DESIGN } from "@/lib/posterDesign";
 import { fmtNum } from "@/lib/format";
 import { getOwnerContext } from "@/lib/ownerContext";
+import { getShopSpike } from "@/lib/spike";
 import { formatINR, shopPrice } from "@/lib/pricing";
 import { siteUrl } from "@/lib/site";
 import { getDailySeries, getShopStats, hasAnyRating, normalizeRange, sinceFor } from "@/lib/stats";
@@ -45,11 +47,12 @@ export default async function DashboardPage({ searchParams }) {
   const range = normalizeRange((await searchParams).range);
   const sparkDays = range === "7" ? 7 : 30;
   // Everything loads in parallel; the day-by-day series feeds the sparklines.
-  const [stats, base, series, everRated] = await Promise.all([
+  const [stats, base, series, everRated, spike] = await Promise.all([
     getShopStats(shop._id, sinceFor(range)),
     siteUrl(),
     getDailySeries(shop._id, sparkDays),
     hasAnyRating(shop._id),
+    getShopSpike(shop._id),
   ]);
   const ratingUrl = `${base}/r/${shop.slug}`;
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
@@ -72,6 +75,8 @@ export default async function DashboardPage({ searchParams }) {
   return (
     <>
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6">
+        <SpikeWarning spike={spike} />
+
         <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} unread={stats.unreadFeedback} />
 
         {!shop.rulesAcceptedAt && <FairRulesAgree />}

@@ -7,11 +7,13 @@ import CopyButton from "@/components/CopyButton";
 import OwnerForm from "@/components/OwnerForm";
 import QrPoster from "@/components/QrPoster";
 import ShopForm from "@/components/ShopForm";
+import SpikeWarning from "@/components/SpikeWarning";
 import SuspiciousPanel from "@/components/SuspiciousPanel";
 import { btnSecondary, card } from "@/components/ui";
 import { requirePageRole } from "@/lib/session";
 import { adminShop } from "@/lib/shopInput";
 import { siteUrl } from "@/lib/site";
+import { getShopSpike } from "@/lib/spike";
 import { getShopStats, getSuspiciousBursts, sinceFor } from "@/lib/stats";
 import Shop from "@/models/Shop";
 import User from "@/models/User";
@@ -28,10 +30,11 @@ export default async function AdminShopPage({ params, searchParams }) {
   if (!doc) notFound();
   const owner = doc.ownerId ? await User.findById(doc.ownerId).select("name email").lean() : null;
   const shop = adminShop(doc, owner);
-  const [stats, base, bursts] = await Promise.all([
+  const [stats, base, bursts, spike] = await Promise.all([
     getShopStats(doc._id, sinceFor("30")),
     siteUrl(),
     getSuspiciousBursts(doc._id),
+    getShopSpike(doc._id),
   ]);
   const ratingUrl = `${base}/r/${shop.slug}`;
 
@@ -63,6 +66,7 @@ export default async function AdminShopPage({ params, searchParams }) {
         </p>
       </section>
 
+      <SpikeWarning spike={spike} variant="admin" />
       <SuspiciousPanel shopId={shop.id} bursts={bursts} />
       <BillingPanel shop={shop} />
       <QrPoster

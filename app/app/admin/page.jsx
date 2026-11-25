@@ -8,6 +8,7 @@ import { fmtNum } from "@/lib/format";
 import { formatINR } from "@/lib/pricing";
 import { isShopActive } from "@/lib/shop";
 import { adminShop } from "@/lib/shopInput";
+import { getSpikesByShop } from "@/lib/spike";
 import { getActivityByShop, getBurstCountsByShop } from "@/lib/stats";
 import Shop from "@/models/Shop";
 import User from "@/models/User";
@@ -33,10 +34,11 @@ const SORTERS = {
 export default async function AdminHome({ searchParams }) {
   await requirePageRole("admin");
 
-  const [docs, activity, bursts] = await Promise.all([
+  const [docs, activity, bursts, spikes] = await Promise.all([
     Shop.find().sort({ createdAt: -1 }).lean(),
     getActivityByShop(30),
     getBurstCountsByShop(),
+    getSpikesByShop(),
   ]);
   const owners = await User.find({ _id: { $in: docs.map((s) => s.ownerId).filter(Boolean) } })
     .select("name email")
@@ -47,6 +49,7 @@ export default async function AdminHome({ searchParams }) {
     live: isShopActive(s),
     activity: activity[String(s._id)] || { scans: 0, ratings: 0, googleClicks: 0, unread: 0 },
     bursts: bursts[String(s._id)] || 0,
+    spike: spikes[String(s._id)] || null,
   }));
   for (const s of shops) s.category = category(s);
 
@@ -130,6 +133,11 @@ export default async function AdminHome({ searchParams }) {
                     {s.owner && !s.rulesAcceptedAt && (
                       <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-semibold text-stone-700">
                         rules not agreed
+                      </span>
+                    )}
+                    {s.spike && (
+                      <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white" title={`${s.spike.count} Google taps ${s.spike.label} vs about ${s.spike.normal}/day`}>
+                        ⚠ Google spike
                       </span>
                     )}
                     {s.bursts > 0 && (

@@ -59,6 +59,16 @@ export default function RatingFlow({ shop }) {
   const [thanksFor, setThanksFor] = useState(null); // "google" | "feedback"
   const [previousStars, setPreviousStars] = useState(null);
   const [openedGoogle, setOpenedGoogle] = useState(false);
+  const [ownShop, setOwnShop] = useState(false);
+
+  // The page is cached for everyone, so ask the server (with this phone's
+  // cookies) whether the viewer is this shop's logged-in owner.
+  useEffect(() => {
+    fetch(`/api/rating/viewer?slug=${encodeURIComponent(shop.slug)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j?.ownShop && setOwnShop(true))
+      .catch(() => {});
+  }, [shop.slug]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -75,6 +85,11 @@ export default function RatingFlow({ shop }) {
       const json = await res.json().catch(() => ({}));
       // The page may be cached for up to an hour; the server always knows the
       // live status. If the shop was paused meanwhile, say so politely.
+      if (res.status === 403 && json.code === "own_shop") {
+        setOwnShop(true);
+        setStars(0);
+        return;
+      }
       if (res.status === 403) {
         setStep("unavailable");
         return;
@@ -140,6 +155,23 @@ export default function RatingFlow({ shop }) {
       </button>
     </p>
   );
+
+  // Owners can't rate or review their own shop (Google removes self-reviews).
+  if (ownShop) {
+    return (
+      <section className={`${card} text-center`}>
+        <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-amber-100 text-2xl" aria-hidden="true">
+          🔒
+        </span>
+        <h2 className="mt-4 text-lg font-semibold">This is your own rating page</h2>
+        <p className="mt-2 text-sm text-muted">
+          You’re logged in as the owner, so you can’t rate your own shop. Google removes reviews written by the business
+          itself, and that can hurt your listing.
+        </p>
+        <p className="mt-3 text-sm text-muted">Share this page with customers, or open it in a private window to see what they see.</p>
+      </section>
+    );
+  }
 
   if (step === "unavailable") {
     return <Unavailable shopName={shop.name} />;
@@ -213,6 +245,15 @@ export default function RatingFlow({ shop }) {
       <p className="mt-1 mb-5 text-sm text-muted">Tap a star to rate</p>
       <StarRating value={stars} onChange={rate} disabled={busy} />
       {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
+      {/* Anyone can go straight to Google, before or without choosing stars. */}
+      {googleUrl && (
+        <p className="mt-6 border-t border-stone-100 pt-4 text-sm text-muted">
+          Prefer to write on Google directly?{" "}
+          <a href={googleUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-ink underline underline-offset-4">
+            <GoogleG /> Review on Google
+          </a>
+        </p>
+      )}
     </section>
   );
 }
