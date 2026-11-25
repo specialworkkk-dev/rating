@@ -3,8 +3,8 @@ export default function Home() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-16">
       <h1 className="text-3xl font-bold tracking-tight">Review Booster</h1>
       <p className="mt-3 text-muted">
-        A QR standee for your counter. Happy customers reach your Google review box in one tap;
-        unhappy ones can tell you privately first.
+        A QR standee for your counter. Every customer can review you on Google in one tap, and
+        anyone with a problem can also tell you privately, so you can fix it.
       </p>
       <a
         href="/login"

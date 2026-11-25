@@ -70,6 +70,11 @@ export default async function AdminHome() {
                   <div className="flex items-center gap-2">
                     <span className="truncate font-semibold">{s.name}</span>
                     <StatusBadge shop={s} />
+                    {s.owner && !s.rulesAcceptedAt && (
+                      <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-semibold text-stone-700">
+                        rules not agreed
+                      </span>
+                    )}
                     {s.bursts > 0 && (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
                         ⚠ unusual activity

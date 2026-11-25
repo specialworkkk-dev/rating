@@ -19,6 +19,10 @@ const ShopSchema = new mongoose.Schema(
     trialEndsAt: Date,
     paidUntil: Date,
     plan: { type: String, enum: ["basic", "premium"], default: "basic" },
+    // When the owner agreed to the fair-review rules (Google policy), and how:
+    // in their dashboard ("owner") or in person when the admin set them up ("admin").
+    rulesAcceptedAt: Date,
+    rulesAcceptedVia: { type: String, enum: ["owner", "admin"] },
   },
   { timestamps: true }
 );

@@ -28,6 +28,9 @@ export async function POST(req) {
   let owner = shop.ownerId ? await User.findById(shop.ownerId) : null;
   const creating = !owner;
   if (creating && password.length < 8) return bad("Password must be at least 8 characters");
+  if (creating && body.rulesAccepted !== true && !shop.rulesAcceptedAt) {
+    return bad("Please confirm the owner has agreed to the fair-review rules");
+  }
   if (!creating && password && password.length < 8) {
     return bad("New password must be at least 8 characters");
   }
@@ -42,6 +45,10 @@ export async function POST(req) {
   await owner.save();
 
   shop.ownerId = owner._id;
+  if (body.rulesAccepted === true && !shop.rulesAcceptedAt) {
+    shop.rulesAcceptedAt = new Date();
+    shop.rulesAcceptedVia = "admin";
+  }
   if (!shop.alertEmail) shop.alertEmail = email;
   await shop.save();
 

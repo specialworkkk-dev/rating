@@ -2,7 +2,7 @@ import "./globals.css";
 
 export const metadata = {
   title: "Review Booster",
-  description: "Get more Google reviews and catch unhappy customers privately.",
+  description: "Make reviewing easy for every customer, and hear about problems early.",
 };
 
 export const viewport = {

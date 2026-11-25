@@ -69,7 +69,12 @@ export default async function AdminShopPage({ params, searchParams }) {
         ratingUrl={ratingUrl}
         version={`${shop.slug}-${doc.updatedAt?.getTime?.() ?? ""}`}
       />
-      <OwnerForm shopId={shop.id} owner={shop.owner} />
+      <OwnerForm
+        shopId={shop.id}
+        owner={shop.owner}
+        rulesAcceptedAt={shop.rulesAcceptedAt}
+        rulesAcceptedVia={shop.rulesAcceptedVia}
+      />
       <ShopForm shop={shop} />
     </div>
   );

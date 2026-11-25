@@ -47,12 +47,15 @@ Setup fees and NFC cards come on top of this.
 
 ## 3. ⚠️ Google Policy Rules (must follow)
 
-1. **No review gating.** Unhappy customers must **still see a "Post on Google" link**. It can be smaller, but it must not be hidden.
+1. **No review gating.** Every customer gets the **same "Post on Google" button**, whatever they rated. Unhappy customers *additionally* get a private feedback form, shown alongside the button, never instead of it. (A big button for happy customers and a small link for unhappy ones still counts as selective solicitation.)
 2. **No fake reviews.** Never write, generate or pay for reviews.
 3. **No AI-written reviews.** Customers write their own words.
 4. **No incentives for reviews.** Don't offer a discount or gift in exchange for a review.
 
-If a shop breaks these rules, Google can remove its reviews. Sell the product as "**make reviewing easy + catch complaints privately**", never as "block bad reviews".
+5. **Neutral wording.** Posters and pages ask "How was your visit?", never "Liked our service?" or "Rate us 5 stars".
+6. **Shop owners agree to the fair-review rules** (ask every customer, no rewards, no staff/family reviews, customers use their own phone, no telling customers what to write). The app records when they agreed.
+
+If a shop breaks these rules, Google can remove its reviews. Sell the product as "**make reviewing easy + catch complaints early**", never as "block bad reviews" or "stop negative reviews". This applies everywhere: website, WhatsApp messages, Instagram posts and face-to-face pitches, because Google and competitors can see them.
 
 ---
 
@@ -61,7 +64,7 @@ If a shop breaks these rules, Google can remove its reviews. Sell the product as
 ```
 Customer pays bill
         ↓
-Sees QR standee / NFC card: "Liked our service? Scan & rate us ⭐"
+Sees QR standee / NFC card: "How was your visit? Scan & rate us ⭐"
         ↓
 Scans → opens yoursite.com/r/<shop-slug>   (no app, loads < 3 sec)
         ↓
@@ -70,13 +73,15 @@ Scans → opens yoursite.com/r/<shop-slug>   (no app, loads < 3 sec)
  ┌──────────────┴───────────────┐
 4–5 stars                     1–3 stars
  ↓                               ↓
-Big button:                   "Sorry! Tell us what went wrong"
-"Post on Google ⭐"            → feedback form (name, phone optional, message)
- ↓                             → owner gets push + email alert
-Opens Google review box        → small link: "Or post on Google"
-directly                                     ↓
-                                     Thank-you screen
+"Post on Google" button        SAME "Post on Google" button
+ ↓                               + "Tell the owner privately" form
+Opens Google review box          (name, phone optional, message)
+directly                         → owner gets push + email alert
+                                         ↓
+                                 Thank-you screen
 ```
+
+Every customer sees the same Google button. The private form is an extra for unhappy customers, never a replacement.
 
 **Google direct review link (free, no API needed):**
 

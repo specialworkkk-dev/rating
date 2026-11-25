@@ -23,6 +23,17 @@ function useLogScan(slug, source) {
   }, [slug, source]);
 }
 
+function GoogleG() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5 rounded-full bg-white p-0.5" aria-hidden="true">
+      <path fill="#4285F4" d="M21.6 12.23c0-.68-.06-1.36-.18-2.02H12v3.83h5.4a4.6 4.6 0 0 1-2 3.03v2.5h3.23c1.9-1.75 2.97-4.32 2.97-7.34z" />
+      <path fill="#34A853" d="M12 22c2.7 0 4.96-.9 6.62-2.43l-3.23-2.5c-.9.6-2.04.95-3.39.95-2.6 0-4.8-1.76-5.6-4.12H3.07v2.58A10 10 0 0 0 12 22z" />
+      <path fill="#FBBC05" d="M6.4 13.9a6 6 0 0 1 0-3.8V7.52H3.07a10 10 0 0 0 0 8.96L6.4 13.9z" />
+      <path fill="#EA4335" d="M12 5.98c1.47 0 2.79.5 3.83 1.5l2.86-2.86A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.93 5.52L6.4 10.1C7.2 7.74 9.4 5.98 12 5.98z" />
+    </svg>
+  );
+}
+
 export default function RatingFlow({ shop, source }) {
   useLogScan(shop.slug, source);
 
@@ -32,6 +43,7 @@ export default function RatingFlow({ shop, source }) {
   const [googleUrl, setGoogleUrl] = useState(shop.googleReviewUrl);
   const [thanksFor, setThanksFor] = useState(null); // "google" | "feedback"
   const [previousStars, setPreviousStars] = useState(null);
+  const [openedGoogle, setOpenedGoogle] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -74,6 +86,40 @@ export default function RatingFlow({ shop, source }) {
     </p>
   ) : null;
 
+  // Google policy: every customer gets the same invitation to review on
+  // Google, whatever they rated. Never hide or shrink it for low ratings.
+  const googleAsk = googleUrl ? (
+    <div className="text-center">
+      <p className="mb-4 text-muted">
+        Would you share your experience on Google? It takes 30 seconds and helps other customers.
+      </p>
+      {openedGoogle ? (
+        <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+          ✓ Google opened in a new tab. Thank you!
+        </p>
+      ) : (
+        <GoogleReviewLink href={googleUrl} ratingId={ratingId} onClick={() => setOpenedGoogle(true)}>
+          <GoogleG /> Post on Google
+        </GoogleReviewLink>
+      )}
+    </div>
+  ) : null;
+
+  const changeRating = (
+    <p className="mt-5 text-center">
+      <button
+        type="button"
+        onClick={() => {
+          setOpenedGoogle(false);
+          setStep("rate");
+        }}
+        className="text-sm text-stone-500"
+      >
+        Change my rating
+      </button>
+    </p>
+  );
+
   if (step === "thanks") {
     return (
       <section className={`${card} text-center`}>
@@ -81,34 +127,33 @@ export default function RatingFlow({ shop, source }) {
         <h2 className="mt-3 text-xl font-semibold">Thank you!</h2>
         <p className="mt-2 text-muted">
           {thanksFor === "feedback"
-            ? `Your message has been sent to ${shop.name}. They’ll use it to do better.`
-            : `Your review helps ${shop.name} a lot. See you again soon!`}
+            ? `Your message has been sent to ${shop.name}. They read every message.`
+            : `Thanks for rating ${shop.name}. See you again soon!`}
         </p>
+        {thanksFor === "feedback" && googleUrl && !openedGoogle && (
+          <div className="mt-6 border-t border-stone-100 pt-5">{googleAsk}</div>
+        )}
       </section>
     );
   }
 
   if (step === "google") {
     return (
-      <section className={`${card} text-center`}>
+      <section className={card}>
         {updatedNote}
-        <p className="text-4xl">{stars === 5 ? "🤩" : "😊"}</p>
-        <h2 className="mt-3 text-xl font-semibold">Glad you liked it!</h2>
-        {googleUrl ? (
-          <>
-            <p className="mt-2 mb-6 text-muted">
-              Would you share your experience on Google? It takes 30 seconds and helps others find us.
-            </p>
-            <GoogleReviewLink href={googleUrl} ratingId={ratingId} onClick={() => thank("google")}>
-              <span aria-hidden="true">⭐</span> Post on Google
-            </GoogleReviewLink>
-          </>
-        ) : (
-          <p className="mt-2 text-muted">Thanks for rating {shop.name}!</p>
+        <div className="mb-5 text-center">
+          <p className="text-4xl">{stars === 5 ? "🤩" : "😊"}</p>
+          <h2 className="mt-3 text-xl font-semibold">Thanks for your rating!</h2>
+        </div>
+        {googleAsk || <p className="text-center text-muted">Thanks for rating {shop.name}!</p>}
+        {openedGoogle && (
+          <p className="mt-4 text-center">
+            <button type="button" onClick={() => thank("google")} className="text-sm font-medium text-ink underline">
+              Done
+            </button>
+          </p>
         )}
-        <button type="button" onClick={() => setStep("rate")} className="mt-5 text-sm text-stone-500">
-          Change my rating
-        </button>
+        {changeRating}
       </section>
     );
   }
@@ -117,25 +162,22 @@ export default function RatingFlow({ shop, source }) {
     return (
       <section className={card}>
         {updatedNote}
-        <div className="text-center">
-          <p className="text-4xl">😔</p>
-          <h2 className="mt-3 text-xl font-semibold">Sorry about that!</h2>
-          <p className="mt-2 mb-5 text-muted">Tell us what went wrong and we’ll make it right.</p>
+        <div className="mb-5 text-center">
+          <p className="text-4xl">🙏</p>
+          <h2 className="mt-3 text-xl font-semibold">Thanks for being honest</h2>
         </div>
-        <FeedbackForm ratingId={ratingId} onSent={() => thank("feedback")} />
-        {/* Google policy: unhappy customers must still be able to post publicly. */}
-        {googleUrl && (
-          <p className="mt-5 text-center text-sm">
-            <GoogleReviewLink href={googleUrl} ratingId={ratingId} variant="link" onClick={() => thank("google")}>
-              Or post a review on Google
-            </GoogleReviewLink>
-          </p>
-        )}
-        <p className="mt-3 text-center">
-          <button type="button" onClick={() => setStep("rate")} className="text-sm text-stone-500">
-            Change my rating
-          </button>
+        {googleAsk}
+        <div className="my-6 flex items-center gap-3 text-xs font-medium tracking-wide text-stone-400 uppercase">
+          <span className="h-px flex-1 bg-stone-200" />
+          {googleUrl ? "and / or" : ""}
+          <span className="h-px flex-1 bg-stone-200" />
+        </div>
+        <h3 className="text-center font-semibold">Tell the owner privately</h3>
+        <p className="mt-1 mb-4 text-center text-sm text-muted">
+          Only {shop.name} sees this, so they can put things right.
         </p>
+        <FeedbackForm ratingId={ratingId} onSent={() => thank("feedback")} />
+        {changeRating}
       </section>
     );
   }

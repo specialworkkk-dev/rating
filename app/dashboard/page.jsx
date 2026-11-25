@@ -1,5 +1,7 @@
 import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
+import FairReviewRules from "@/components/FairReviewRules";
+import FairRulesAgree from "@/components/FairRulesAgree";
 import FeedbackList from "@/components/FeedbackList";
 import QrPoster from "@/components/QrPoster";
 import StatsCards from "@/components/StatsCards";
@@ -72,6 +74,8 @@ export default async function DashboardPage({ searchParams }) {
           </p>
         </div>
 
+        {!shop.rulesAcceptedAt && <FairRulesAgree />}
+
         <StatsCards stats={stats} />
 
         <FeedbackList initial={feedback} />
@@ -81,6 +85,20 @@ export default async function DashboardPage({ searchParams }) {
           ratingUrl={ratingUrl}
           version={`${shop.slug}-${shop.updatedAt?.getTime?.() ?? ""}`}
         />
+        {shop.rulesAcceptedAt && (
+          <details className={`${card} group`}>
+            <summary className="flex cursor-pointer list-none items-center justify-between font-semibold">
+              Google’s review rules
+              <span className="text-sm font-normal text-muted">
+                Agreed {fmtDate(shop.rulesAcceptedAt)} · <span className="group-open:hidden">Show</span>
+                <span className="hidden group-open:inline">Hide</span>
+              </span>
+            </summary>
+            <div className="mt-4">
+              <FairReviewRules />
+            </div>
+          </details>
+        )}
       </main>
     </>
   );

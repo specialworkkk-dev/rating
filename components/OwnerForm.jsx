@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { btnPrimary, card, smallInputClass as input } from "./ui";
+import FairReviewRules from "./FairReviewRules";
+import { btnPrimary, card, fmtDate, smallInputClass as input } from "./ui";
 
-export default function OwnerForm({ shopId, owner }) {
+export default function OwnerForm({ shopId, owner, rulesAcceptedAt, rulesAcceptedVia }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -18,7 +19,7 @@ export default function OwnerForm({ shopId, owner }) {
     const res = await fetch("/api/admin/owners", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shopId, ...data }),
+      body: JSON.stringify({ shopId, ...data, rulesAccepted: data.rulesAccepted === "on" }),
     }).catch(() => null);
     const json = await res?.json().catch(() => ({}));
     setBusy(false);
@@ -64,6 +65,26 @@ export default function OwnerForm({ shopId, owner }) {
           className={input}
         />
       </div>
+      {rulesAcceptedAt ? (
+        <p className="text-sm text-emerald-700">
+          ✓ Fair-review rules agreed on {fmtDate(rulesAcceptedAt)}
+          {rulesAcceptedVia === "admin" ? " (at setup)" : " (by the owner)"}
+        </p>
+      ) : (
+        <div className="rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200">
+          <p className="mb-3 text-sm font-semibold">Go through these rules with the owner:</p>
+          <FairReviewRules compact />
+          <label className="mt-3 flex items-start gap-2 text-sm">
+            <input type="checkbox" name="rulesAccepted" required={!owner} className="mt-0.5 size-4 accent-stone-900" />
+            <span>The owner has read and agreed to these rules.</span>
+          </label>
+          {owner && (
+            <p className="mt-2 text-xs text-muted">
+              Not agreed yet. The owner will also be asked to agree on their dashboard.
+            </p>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={busy} className={btnPrimary}>
           {busy ? "Saving…" : owner ? "Update owner" : "Create owner login"}

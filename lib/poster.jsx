@@ -200,7 +200,7 @@ function Poster({ shop, url, qr, logo, width }) {
         {/* Call to action */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ fontSize: 6 * u, fontWeight: 700 }}>
-            {nb("Liked our service?")}
+            {nb("How was your visit?")}
           </div>
           <div style={{ marginTop: 1 * u, fontSize: 4.4 * u, color: COLORS.brandDark }}>
             {nb("Scan & rate us")}
