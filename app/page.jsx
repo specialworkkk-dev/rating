@@ -7,7 +7,7 @@ export default function Home() {
         anyone with a problem can also tell you privately, so you can fix it.
       </p>
       <a
-        href="/login"
+        href="/app/login"
         className="mt-8 inline-flex w-fit rounded-xl bg-ink px-5 py-3 font-semibold text-white"
       >
         Shop owner login

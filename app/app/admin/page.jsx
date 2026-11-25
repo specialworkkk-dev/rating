@@ -81,7 +81,7 @@ export default async function AdminHome({ searchParams }) {
     if (pageSize !== 10) next.set("per", String(pageSize));
     if (n > 1) next.set("page", String(n));
     const qs = next.toString();
-    return qs ? `/admin?${qs}` : "/admin";
+    return qs ? `/app/admin?${qs}` : "/app/admin";
   };
 
   return (
@@ -99,7 +99,7 @@ export default async function AdminHome({ searchParams }) {
 
       <div className="flex items-center">
         <h1 className="text-xl font-bold">Shops</h1>
-        <Link href="/admin/shops/new" className={`${btnPrimary} ml-auto`}>
+        <Link href="/app/admin/shops/new" className={`${btnPrimary} ml-auto`}>
           + Add shop
         </Link>
       </div>
@@ -111,7 +111,7 @@ export default async function AdminHome({ searchParams }) {
       ) : pageShops.length === 0 ? (
         <div className={`${card} text-center`}>
           <p className="font-medium">No shops match these filters</p>
-          <Link href="/admin" className="mt-2 inline-block text-sm font-medium text-brand-700 underline">
+          <Link href="/app/admin" className="mt-2 inline-block text-sm font-medium text-brand-700 underline">
             Clear filters
           </Link>
         </div>
@@ -120,7 +120,7 @@ export default async function AdminHome({ searchParams }) {
           {pageShops.map((s) => (
             <li key={s.id}>
               <Link
-                href={`/admin/shops/${s.id}`}
+                href={`/app/admin/shops/${s.id}`}
                 className={`${card} flex flex-wrap items-center gap-x-5 gap-y-2 hover:ring-brand-500`}
               >
                 <div className="min-w-0 flex-1 basis-56">

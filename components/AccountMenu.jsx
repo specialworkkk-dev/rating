@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { logout } from "@/app/login/actions";
+import { logout } from "@/app/app/login/actions";
 
 function initials(name, email) {
   const src = (name || "").trim() || (email || "").split("@")[0];

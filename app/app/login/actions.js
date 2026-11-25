@@ -23,9 +23,9 @@ export async function login(_prev, formData) {
     throw err;
   }
   // /dashboard sends admins on to /admin.
-  redirect("/dashboard");
+  redirect("/app/dashboard");
 }
 
 export async function logout() {
-  await signOut({ redirectTo: "/login" });
+  await signOut({ redirectTo: "/app/login" });
 }

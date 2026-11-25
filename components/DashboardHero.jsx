@@ -55,7 +55,7 @@ export default function DashboardHero({ shop, planText, summary, ratingUrl, unre
           <div className="mt-6 flex flex-wrap gap-3">
             {unread > 0 && (
               <Link
-                href="/dashboard/feedback"
+                href="/app/dashboard/feedback"
                 className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-stone-950 hover:bg-stone-100"
               >
                 Open feedback

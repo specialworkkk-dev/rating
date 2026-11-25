@@ -37,7 +37,7 @@ export default async function AdminShopPage({ params, searchParams }) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <Link href="/admin" className="text-sm text-stone-600">
+      <Link href="/app/admin" className="text-sm text-stone-600">
         ← All shops
       </Link>
       <h1 className="text-xl font-bold">{shop.name}</h1>

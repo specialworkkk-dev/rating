@@ -75,7 +75,7 @@ export default function ShopForm({ shop }) {
       setMsg({ type: "ok", text: "Saved" });
       router.refresh();
     } else {
-      router.push(`/admin/shops/${json.shop.id}?created=1`);
+      router.push(`/app/admin/shops/${json.shop.id}?created=1`);
     }
   }
 

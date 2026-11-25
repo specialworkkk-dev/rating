@@ -83,7 +83,7 @@ export default async function DashboardPage({ searchParams }) {
             {RANGES.map((r) => (
               <Link
                 key={r.key}
-                href={`/dashboard?range=${r.key}`}
+                href={`/app/dashboard?range=${r.key}`}
                 scroll={false}
                 className={`rounded-lg px-3 py-1.5 ${range === r.key ? "bg-white font-medium shadow-sm" : "text-stone-600 hover:text-ink"}`}
               >

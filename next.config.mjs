@@ -12,6 +12,15 @@ const nextConfig = {
   },
   // The QR poster reads these fonts from disk; make sure they ship with the
   // serverless functions on Vercel.
+  // The owner/admin app moved under /app (so an installed app only claims
+  // /app/... links, never customers' /r/... rating links). Old addresses forward.
+  async redirects() {
+    return [
+      { source: "/login", destination: "/app/login", permanent: false },
+      { source: "/dashboard/:path*", destination: "/app/dashboard/:path*", permanent: false },
+      { source: "/admin/:path*", destination: "/app/admin/:path*", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

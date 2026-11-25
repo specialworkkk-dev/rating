@@ -51,7 +51,7 @@ export default async function DailyRatingsPage({ searchParams }) {
           {RANGES.map((r) => (
             <Link
               key={r.key}
-              href={`/dashboard/ratings?range=${r.key}`}
+              href={`/app/dashboard/ratings?range=${r.key}`}
               scroll={false}
               className={`flex-1 rounded-lg px-3 py-1.5 text-center md:flex-none ${range === r.key ? "bg-white font-medium shadow-sm" : "text-stone-600 hover:text-ink"}`}
             >
