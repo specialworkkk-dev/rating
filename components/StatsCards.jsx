@@ -1,9 +1,11 @@
 import AnimatedBar from "./AnimatedBar";
 import CountUp from "./CountUp";
+import Sparkline from "./Sparkline";
 import { card } from "./ui";
 
-// Green for happy, through amber, to red for unhappy.
-const STAR_COLORS = { 5: "#16a34a", 4: "#65a30d", 3: "#f59e0b", 2: "#f97316", 1: "#ef4444" };
+// Diverging scale (validated): blue for happy, neutral grey midpoint, red for
+// unhappy. Readable with colour blindness, unlike green-to-red.
+const STAR_COLORS = { 5: "#1c5cab", 4: "#5598e7", 3: "#aeaba4", 2: "#e66767", 1: "#c23434" };
 
 const pct = (part, whole) => (whole ? (part / whole) * 100 : 0);
 
@@ -32,16 +34,21 @@ function Icon({ name, tone }) {
   );
 }
 
-function Stat({ icon, tone, label, children, hint }) {
+function Stat({ icon, tone, label, children, hint, trend, trendLabel }) {
   return (
     <div className={`${card} flex flex-col gap-3 p-4 sm:p-5`}>
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium leading-tight text-muted">{label}</p>
         <Icon name={icon} tone={tone} />
       </div>
-      <p className="text-3xl font-bold tracking-tight">
-        {children}
-      </p>
+      <div className="flex items-end justify-between gap-2">
+        <p className="text-3xl font-bold tracking-tight">{children}</p>
+        {trend && (
+          <span className="hidden sm:block">
+            <Sparkline values={trend} label={trendLabel} />
+          </span>
+        )}
+      </div>
       {hint && <p className="text-xs text-muted">{hint}</p>}
     </div>
   );
@@ -69,7 +76,12 @@ function StarMeter({ value }) {
   );
 }
 
-export default function StatsCards({ stats }) {
+export default function StatsCards({ stats, series = [], chart = null }) {
+  // A flat line of zeros says nothing, so trends appear once there is activity.
+  const trend = (key) => {
+    const values = series.map((d) => d[key]);
+    return values.length > 1 && values.some((v) => v > 0) ? values : null;
+  };
   const happy = stats.breakdown[4] + stats.breakdown[5];
   const ratedOfScans = Math.min(100, Math.round(pct(stats.ratings, stats.scans)));
   const googleOfRatings = Math.round(pct(stats.googleClicks, stats.ratings));
@@ -77,7 +89,7 @@ export default function StatsCards({ stats }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon="scan" tone="bg-sky-50 text-sky-600" label="Scans" hint="QR / NFC opens">
+        <Stat icon="scan" tone="bg-sky-50 text-sky-600" label="Scans" hint="QR / NFC opens" trend={trend("scans")} trendLabel="Scans per day">
           <CountUp value={stats.scans} />
         </Stat>
         <Stat
@@ -85,6 +97,8 @@ export default function StatsCards({ stats }) {
           tone="bg-brand-50 text-brand-600"
           label="Ratings"
           hint={stats.scans ? `${ratedOfScans}% of scans rated` : "No scans yet"}
+          trend={trend("ratings")}
+          trendLabel="Ratings per day"
         >
           <CountUp value={stats.ratings} />
         </Stat>
@@ -107,10 +121,14 @@ export default function StatsCards({ stats }) {
           tone="bg-violet-50 text-violet-600"
           label="Sent to Google"
           hint={stats.ratings ? `${googleOfRatings}% of ratings` : "Tapped “Post on Google”"}
+          trend={trend("google")}
+          trendLabel="Sent to Google per day"
         >
           <CountUp value={stats.googleClicks} />
         </Stat>
       </div>
+
+      {chart}
 
       <section className={card}>
         <h2 className="font-semibold">Ratings breakdown</h2>

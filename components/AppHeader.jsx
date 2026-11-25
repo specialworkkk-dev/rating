@@ -15,12 +15,13 @@ export default function AppHeader({ title, user, badge = 0, links = [] }) {
         <span className="flex items-center gap-2 font-medium">
           {title}
           {badge > 0 && (
-            <span
+            <a
+              href="#feedback"
               className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white"
-              aria-label={`${badge} unread`}
+              aria-label={`${badge} unread messages`}
             >
               {badge}
-            </span>
+            </a>
           )}
         </span>
         <nav className="flex gap-3 text-sm text-stone-600">

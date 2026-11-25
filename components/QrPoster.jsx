@@ -23,7 +23,7 @@ export default function QrPoster({ endpoint, ratingUrl, version = "" }) {
   const v = encodeURIComponent(version);
 
   return (
-    <section className={card}>
+    <section id="poster" className={`${card} scroll-mt-20`}>
       <h2 className="font-semibold">QR poster</h2>
       <p className="mt-1 text-sm text-muted">
         Print it and put it where customers pay. Scanning opens your rating page.

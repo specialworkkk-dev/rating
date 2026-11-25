@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { InboxIllustration } from "./illustrations";
 import { card, fmtDateTime } from "./ui";
 
 const STAR_BADGE = {
@@ -45,7 +46,7 @@ export default function FeedbackList({ initial }) {
   const shown = filter === "unread" ? items.filter((f) => !f.isRead) : items;
 
   return (
-    <section className={card}>
+    <section id="feedback" className={`${card} scroll-mt-20`}>
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="font-semibold">Private feedback</h2>
         {unread > 0 && (
@@ -70,11 +71,7 @@ export default function FeedbackList({ initial }) {
 
       {shown.length === 0 ? (
         <div className="mt-6 mb-2 flex flex-col items-center text-center">
-          <span className="flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-            <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M5 13l4 4L19 7" />
-            </svg>
-          </span>
+          <InboxIllustration />
           <p className="mt-3 font-medium">
             {filter === "unread" ? "All caught up" : "No complaints yet"}
           </p>

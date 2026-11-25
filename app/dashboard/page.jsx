@@ -1,8 +1,11 @@
 import Link from "next/link";
+import ActivityChart from "@/components/ActivityChart";
 import AppHeader from "@/components/AppHeader";
+import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
 import FairRulesAgree from "@/components/FairRulesAgree";
 import FeedbackList from "@/components/FeedbackList";
+import GettingStarted from "@/components/GettingStarted";
 import PausedNotice from "@/components/PausedNotice";
 import QrPoster from "@/components/QrPoster";
 import StatsCards from "@/components/StatsCards";
@@ -12,7 +15,7 @@ import { requirePageRole } from "@/lib/session";
 import { formatINR, shopPrice } from "@/lib/pricing";
 import { pauseReason } from "@/lib/shop";
 import { siteUrl } from "@/lib/site";
-import { getFeedbackList, getShopStats, normalizeRange, sinceFor } from "@/lib/stats";
+import { countAllRatings, getDailySeries, getFeedbackList, getShopStats, normalizeRange, sinceFor } from "@/lib/stats";
 import Shop from "@/models/Shop";
 
 export const metadata = { title: `Dashboard · ${BRAND.name}` };
@@ -56,45 +59,62 @@ export default async function DashboardPage({ searchParams }) {
   }
 
   const range = normalizeRange((await searchParams).range);
-  const [stats, feedback, base] = await Promise.all([
+  const chartDays = range === "7" ? 7 : 30;
+  const [stats, feedback, base, series, everRated] = await Promise.all([
     getShopStats(shop._id, sinceFor(range)),
     getFeedbackList(shop._id),
     siteUrl(),
+    getDailySeries(shop._id, chartDays),
+    countAllRatings(shop._id),
   ]);
   const ratingUrl = `${base}/r/${shop.slug}`;
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
+  const daysLeft = until ? Math.max(0, Math.ceil((new Date(until) - Date.now()) / 86400000)) : null;
+
+  const planText =
+    shop.status === "trial"
+      ? `Free trial${daysLeft != null ? ` · ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left` : ""}`
+      : `${formatINR(shopPrice(shop))}/month${until ? ` · paid until ${fmtDate(until)}` : ""}`;
+
+  const period = { 7: "In the last 7 days", 30: "In the last 30 days", all: "So far" }[range];
+  const summary = stats.ratings
+    ? `${period}, ${stats.ratings} ${stats.ratings === 1 ? "customer" : "customers"} rated you ${stats.average.toFixed(1)}★, ${stats.googleClicks} went on to Google${
+        stats.unreadFeedback ? `, and you have ${stats.unreadFeedback} unread ${stats.unreadFeedback === 1 ? "message" : "messages"}` : ""
+      }.`
+    : everRated
+      ? `${period}, no new ratings yet. Make sure your QR poster is easy to see.`
+      : "Your rating page is ready. Put up your QR poster and invite every customer to scan.";
 
   return (
     <>
       <AppHeader title={shop.name} user={user} badge={stats.unreadFeedback} />
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex rounded-lg bg-stone-200/60 p-1 text-sm">
+        <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} />
+
+        {!shop.rulesAcceptedAt && <FairRulesAgree />}
+        {everRated === 0 && <GettingStarted />}
+
+        <div className="flex flex-wrap items-center gap-3 pt-1">
+          <h2 className="text-lg font-semibold">Overview</h2>
+          <div className="ml-auto flex rounded-xl bg-stone-200/60 p-1 text-sm">
             {RANGES.map((r) => (
               <Link
                 key={r.key}
                 href={`/dashboard?range=${r.key}`}
-                className={`rounded-md px-3 py-1 ${range === r.key ? "bg-white font-medium shadow-sm" : "text-stone-600"}`}
+                scroll={false}
+                className={`rounded-lg px-3 py-1.5 ${range === r.key ? "bg-white font-medium shadow-sm" : "text-stone-600 hover:text-ink"}`}
               >
                 {r.label}
               </Link>
             ))}
           </div>
-          <p className="ml-auto text-sm text-muted">
-            {shop.status === "trial" ? (
-              <>Free trial{until ? ` until ${fmtDate(until)}` : ""}</>
-            ) : (
-              <>
-                Plan <span className="font-medium text-ink">{formatINR(shopPrice(shop))}/month</span>
-                {until ? ` · paid until ${fmtDate(until)}` : ""}
-              </>
-            )}
-          </p>
         </div>
 
-        {!shop.rulesAcceptedAt && <FairRulesAgree />}
-
-        <StatsCards stats={stats} />
+        <StatsCards
+          stats={stats}
+          series={series}
+          chart={<ActivityChart series={series} title={chartDays === 7 ? "Last 7 days" : "Last 30 days"} />}
+        />
 
         <FeedbackList initial={feedback} />
 
