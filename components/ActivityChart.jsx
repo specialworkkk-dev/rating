@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { fmtNum } from "@/lib/format";
-import ActivityTable from "./ActivityTable";
 import { ChartEmptyIllustration } from "./illustrations";
 import { card } from "./ui";
 
@@ -33,11 +32,10 @@ function niceScale(max) {
  * Ratings per day (or per month for long periods), stacked happy vs unhappy,
  * so one bar shows how many customers rated and how happy they were.
  */
-export default function ActivityChart({ series, title, unit = "day" }) {
+export default function ActivityChart({ series, title, unit = "day", heading }) {
   const monthly = unit === "month";
   const nameOf = (d) => (monthly ? monthLongFmt.format(parse(d.date)) : dayFmt.format(parse(d.date)));
   const [hover, setHover] = useState(null);
-  const [table, setTable] = useState(false);
 
   const totals = series.reduce(
     (t, d) => ({ happy: t.happy + d.happy, unhappy: t.unhappy + d.unhappy, scans: t.scans + d.scans }),
@@ -55,7 +53,7 @@ export default function ActivityChart({ series, title, unit = "day" }) {
     <section className={card}>
       <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
         <div>
-          <h2 className="font-semibold">{monthly ? "Monthly ratings" : "Daily ratings"}</h2>
+          <h2 className="font-semibold">{heading || (monthly ? "Monthly ratings" : "Daily ratings")}</h2>
           <p className="text-sm text-muted">{title}</p>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-stone-600" aria-label="Legend">
@@ -171,21 +169,6 @@ export default function ActivityChart({ series, title, unit = "day" }) {
         </div>
       )}
 
-      <div className="mt-4 border-t border-stone-100 pt-3">
-        <button
-          type="button"
-          onClick={() => setTable((v) => !v)}
-          aria-expanded={table}
-          className="text-sm font-medium text-stone-600 hover:text-ink"
-        >
-          {table ? "Hide detailed figures" : "Show detailed figures"}
-        </button>
-        {table && (
-          <div className="mt-4">
-            <ActivityTable />
-          </div>
-        )}
-      </div>
     </section>
   );
 }

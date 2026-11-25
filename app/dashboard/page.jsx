@@ -1,5 +1,4 @@
 import Link from "next/link";
-import ActivityChart from "@/components/ActivityChart";
 import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
 import FairRulesAgree from "@/components/FairRulesAgree";
@@ -13,7 +12,7 @@ import { fmtNum } from "@/lib/format";
 import { getOwnerContext } from "@/lib/ownerContext";
 import { formatINR, shopPrice } from "@/lib/pricing";
 import { siteUrl } from "@/lib/site";
-import { getDailySeries, getMonthlySeries, getShopStats, hasAnyRating, normalizeRange, sinceFor } from "@/lib/stats";
+import { getDailySeries, getShopStats, hasAnyRating, normalizeRange, sinceFor } from "@/lib/stats";
 
 export const metadata = { title: `Dashboard · ${BRAND.name}` };
 
@@ -43,18 +42,14 @@ export default async function DashboardPage({ searchParams }) {
   }
 
   const range = normalizeRange((await searchParams).range);
-  const chartDays = range === "7" ? 7 : 30;
-  // 7 and 30 days: a bar per day. All time: a bar per month (last 12 months),
-  // because 365 daily bars would be unreadable. Everything loads in parallel.
-  const monthly = range === "all";
-  const [stats, base, series, everRated, monthSeries] = await Promise.all([
+  const sparkDays = range === "7" ? 7 : 30;
+  // Everything loads in parallel; the day-by-day series feeds the sparklines.
+  const [stats, base, series, everRated] = await Promise.all([
     getShopStats(shop._id, sinceFor(range)),
     siteUrl(),
-    getDailySeries(shop._id, chartDays),
+    getDailySeries(shop._id, sparkDays),
     hasAnyRating(shop._id),
-    monthly ? getMonthlySeries(shop._id, 12) : null,
   ]);
-  const chartSeries = monthSeries || series;
   const ratingUrl = `${base}/r/${shop.slug}`;
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
   const daysLeft = until ? Math.max(0, Math.ceil((new Date(until) - Date.now()) / 86400000)) : null;
@@ -97,17 +92,24 @@ export default async function DashboardPage({ searchParams }) {
           </div>
         </div>
 
-        <StatsCards
-          stats={stats}
-          series={series}
-          chart={
-            <ActivityChart
-              series={chartSeries}
-              unit={monthly ? "month" : "day"}
-              title={monthly ? "Last 12 months" : chartDays === 7 ? "Last 7 days" : "Last 30 days"}
-            />
-          }
-        />
+        <StatsCards stats={stats} series={series} />
+
+        <Link
+          href="/dashboard/ratings"
+          prefetch={true}
+          className={`${card} group flex items-center gap-4 transition-colors hover:ring-stone-300`}
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+            <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+              <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">Daily ratings</span>
+            <span className="block text-sm text-muted">Day-by-day chart and detailed figures for any period</span>
+          </span>
+          <span className="text-stone-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true">→</span>
+        </Link>
 
         <QrPoster
           endpoint="/api/dashboard/qr"
