@@ -1,9 +1,9 @@
 import ServicePlanEditor from "@/components/ServicePlanEditor";
 import UsageMeter, { LevelLabel } from "@/components/UsageMeter";
-import { card, fmtDate } from "@/components/ui";
+import { btnPrimary, btnSecondary, card, fmtDate } from "@/components/ui";
 import { fmtFull, fmtNum } from "@/lib/format";
 import { formatINR } from "@/lib/pricing";
-import { getMongoUsage, getVercelUsage } from "@/lib/services";
+import { BACKUP_EVERY_DAYS, getMongoUsage, getVercelUsage } from "@/lib/services";
 import { fmtBytes, SERVICES } from "@/lib/servicePlans";
 import { requirePageRole } from "@/lib/session";
 
@@ -169,6 +169,40 @@ function VercelCard({ v }) {
   );
 }
 
+function Backups({ last }) {
+  const days = last ? Math.floor((Date.now() - new Date(last.at)) / 864e5) : null;
+  const overdue = days == null || days >= BACKUP_EVERY_DAYS;
+  return (
+    <div className={`rounded-xl p-4 text-sm ring-1 ${overdue ? "bg-amber-50 ring-amber-200" : "bg-emerald-50 ring-emerald-200"}`}>
+      <h3 className="font-semibold">Backups</h3>
+      <p className="mt-1 text-stone-700">
+        {last ? (
+          <>
+            Last backup: <b>{fmtFull(last.at)}</b> ({last.type === "full" ? "full" : "essential"})
+            {overdue ? ". It’s time for a new one." : "."}
+          </>
+        ) : (
+          "No backup downloaded yet."
+        )}{" "}
+        The free database plan may not keep backups for you, so download one every week and keep it somewhere safe (e.g. Google
+        Drive). The file holds customers’ phone numbers, so don’t share it.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <a href="/api/admin/backup?type=essential" className={btnPrimary} download>
+          ⬇ Download backup
+        </a>
+        <a href="/api/admin/backup?type=full" className={btnSecondary} download>
+          ⬇ Full backup (with raw ratings)
+        </a>
+      </div>
+      <p className="mt-2 text-xs text-muted">
+        “Backup” has every shop, login, feedback message and all figures. “Full” also has each individual rating and scan from the
+        last {"~"}3 months, so it’s bigger. To restore, see scripts/restore.mjs in the code.
+      </p>
+    </div>
+  );
+}
+
 function MongoCard({ m }) {
   const limitBytes = m.limit * 1048576;
   const othersBytes = m.others.reduce((a, d) => a + d.bytes, 0);
@@ -270,6 +304,8 @@ function MongoCard({ m }) {
           )}
         </p>
       </div>
+
+      <Backups last={m.lastBackup} />
 
       <Footer id="mongodb" setting={m}>
         Exact sizes, read from the database just now. Atlas’s own page can show slightly different numbers.

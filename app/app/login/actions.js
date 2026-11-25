@@ -29,3 +29,8 @@ export async function login(_prev, formData) {
 export async function logout() {
   await signOut({ redirectTo: "/app/login" });
 }
+
+/** After a password change: end this login too, then show a note on the login page. */
+export async function logoutAfterPasswordChange() {
+  await signOut({ redirectTo: "/app/login?changed=1" });
+}

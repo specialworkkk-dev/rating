@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import { bad, readJson } from "@/lib/http";
+import { revalidateTag } from "next/cache";
 import { requireApiRole } from "@/lib/session";
+import { BURSTS_TAG } from "@/lib/stats";
 import Feedback from "@/models/Feedback";
 import { bumpPeriods, bumpTotals, istDayKey, moodOf } from "@/lib/totals";
 import Rating from "@/models/Rating";
@@ -40,5 +42,6 @@ export async function DELETE(req, { params }) {
   }
   for (const { date, inc: dayInc } of Object.values(byDay)) await bumpPeriods(id, date, dayInc);
 
+  revalidateTag(BURSTS_TAG, { expire: 0 }); // the admin list's "unusual activity" badges
   return Response.json({ removedRatings: ratings.deletedCount, removedFeedback: feedback.deletedCount });
 }

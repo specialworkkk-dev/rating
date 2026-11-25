@@ -66,6 +66,15 @@ export default function AccountMenu({ name, email, role }) {
               {role === "admin" ? "Administrator" : "Shop owner"}
             </span>
           </div>
+          <div className="border-t border-stone-100 p-1.5">
+            <a
+              href={role === "admin" ? "/app/admin/password" : "/app/dashboard/password"}
+              role="menuitem"
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-stone-50"
+            >
+              <span aria-hidden="true">🔑</span> Change password
+            </a>
+          </div>
           <div className="flex gap-4 border-t border-stone-100 px-4 py-2.5 text-xs text-muted">
             <a href="/terms" target="_blank" className="hover:text-ink hover:underline">
               Terms of Service

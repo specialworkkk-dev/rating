@@ -1,6 +1,7 @@
 import { bad, readJson } from "@/lib/http";
 import { connectDB } from "@/lib/db";
-import { getServiceSetting } from "@/lib/services";
+import { revalidateTag } from "next/cache";
+import { getServiceSetting, SERVICES_TAG } from "@/lib/services";
 import { SERVICES } from "@/lib/servicePlans";
 import { requireApiRole } from "@/lib/session";
 import ServiceSetting from "@/models/ServiceSetting";
@@ -27,5 +28,6 @@ export async function PATCH(req, { params }) {
     { $set: { plan: plan.id, cost: Math.round(cost), limit: Math.round(limit) } },
     { upsert: true }
   );
+  revalidateTag(SERVICES_TAG, { expire: 0 });
   return Response.json({ ok: true, setting: await getServiceSetting(id) });
 }

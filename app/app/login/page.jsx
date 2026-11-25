@@ -60,7 +60,8 @@ function PreviewCard() {
   );
 }
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }) {
+  const { changed } = await searchParams;
   const user = await currentUser();
   if (user) redirect(homeFor(user));
 
@@ -117,6 +118,11 @@ export default async function LoginPage() {
 
           <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
           <p className="mt-1 text-muted">Log in to your dashboard.</p>
+          {changed && (
+            <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900 ring-1 ring-emerald-200" role="status">
+              ✓ Password changed. Log in with your new password.
+            </p>
+          )}
 
           <div className="mt-8">
             <LoginForm />

@@ -41,7 +41,13 @@ export async function POST(req) {
   if (creating) owner = new User({ role: "owner", shopId: shop._id });
   owner.name = name;
   owner.email = email;
-  if (password) owner.passwordHash = await bcrypt.hash(password, 10);
+  if (password) {
+    owner.passwordHash = await bcrypt.hash(password, 10);
+    if (!creating) {
+      owner.pwv = (owner.pwv || 0) + 1; // the owner's old logins stop working
+      owner.passwordChangedAt = new Date();
+    }
+  }
   await owner.save();
 
   shop.ownerId = owner._id;

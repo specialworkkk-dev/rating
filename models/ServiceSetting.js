@@ -16,6 +16,9 @@ const ServiceSettingSchema = new mongoose.Schema(
       shopsDone: Number,
       deleted: { ratings: Number, scans: Number, direct: Number },
     },
+    // Last downloaded backup (admin Services page).
+    // ("type" must be wrapped: a bare `type:` key would set the field's own type.)
+    lastBackup: { at: Date, type: { type: String }, counts: mongoose.Schema.Types.Mixed },
   },
   { versionKey: false, timestamps: { createdAt: false, updatedAt: true } }
 );

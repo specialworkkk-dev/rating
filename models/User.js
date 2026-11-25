@@ -8,6 +8,10 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ["admin", "owner"], default: "owner" },
     shopId: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
     pushTokens: { type: [String], default: [] },
+    // Goes up by one whenever the password changes. Logins made before that
+    // carry the old number and stop working, on every device.
+    pwv: { type: Number, default: 0 },
+    passwordChangedAt: Date,
   },
   { timestamps: true }
 );
