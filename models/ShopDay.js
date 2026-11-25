@@ -13,6 +13,7 @@ const ShopDaySchema = new mongoose.Schema(
     stars: { type: Number, default: 0 }, // sum of all star values, for the average
     google: { type: Number, default: 0 },
     scans: { type: Number, default: 0 },
+    direct: { type: Number, default: 0 }, // "Review on Google" taps on the first screen
   },
   { versionKey: false }
 );

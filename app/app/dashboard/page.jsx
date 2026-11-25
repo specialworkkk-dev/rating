@@ -65,7 +65,7 @@ export default async function DashboardPage({ searchParams }) {
 
   const period = { 7: "In the last 7 days", 30: "In the last 30 days", all: "So far" }[range];
   const summary = stats.ratings
-    ? `${period}, ${fmtNum(stats.ratings)} ${stats.ratings === 1 ? "customer" : "customers"} rated you ${stats.average.toFixed(1)}★, ${fmtNum(stats.googleClicks)} went on to Google${
+    ? `${period}, ${fmtNum(stats.ratings)} ${stats.ratings === 1 ? "customer" : "customers"} rated you ${stats.average.toFixed(1)}★, ${fmtNum(stats.googleClicks + (stats.directGoogle || 0))} went on to Google${
         stats.unreadFeedback ? `, and you have ${fmtNum(stats.unreadFeedback)} unread ${stats.unreadFeedback === 1 ? "message" : "messages"}` : ""
       }.`
     : everRated

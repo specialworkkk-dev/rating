@@ -198,7 +198,8 @@ export default function ActivityTable() {
             <span className="font-semibold">{periodName} total</span>
             <span className="text-muted"> ({rangeText})</span>
             <span className="font-semibold">:</span> {fmtNum(data.totals.scans)} scans · {fmtNum(data.totals.happy)} happy ·{" "}
-            {fmtNum(data.totals.unhappy)} unhappy · {fmtNum(data.totals.google)} to Google
+            {fmtNum(data.totals.unhappy)} unhappy · {fmtNum(data.totals.google + (data.totals.direct || 0))} to Google
+            {data.totals.direct > 0 && <span className="text-muted"> (incl. {fmtNum(data.totals.direct)} direct)</span>}
           </p>
 
           {data.total === 0 ? (
@@ -219,11 +220,14 @@ export default function ActivityTable() {
                       <span className="sm:hidden">Google</span>
                       <span className="hidden sm:inline">To Google</span>
                     </th>
+                    <th className="hidden px-2 py-2.5 text-right font-medium sm:table-cell sm:px-4" title="“Review on Google” taps on the first screen (included in To Google)">
+                      of which direct
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
                   {data.rows.map((r) => {
-                    const blank = !r.scans && !r.happy && !r.unhappy && !r.google;
+                    const blank = !r.scans && !r.happy && !r.unhappy && !r.google && !r.direct;
                     return (
                       <tr key={r.key} className={blank ? "text-stone-400" : ""}>
                         <td className="px-2.5 py-2.5 whitespace-nowrap sm:px-4">
@@ -235,7 +239,8 @@ export default function ActivityTable() {
                         <td className="hidden px-2 py-2.5 text-right sm:table-cell sm:px-4">{fmtNum(r.scans)}</td>
                         <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(r.happy)}</td>
                         <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(r.unhappy)}</td>
-                        <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(r.google)}</td>
+                        <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(r.google + (r.direct || 0))}</td>
+                        <td className="hidden px-2 py-2.5 text-right text-muted sm:table-cell sm:px-4">{fmtNum(r.direct || 0)}</td>
                       </tr>
                     );
                   })}
@@ -250,7 +255,8 @@ export default function ActivityTable() {
                       <td className="hidden px-2 py-2.5 text-right sm:table-cell sm:px-4">{fmtNum(data.totals.scans)}</td>
                       <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(data.totals.happy)}</td>
                       <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(data.totals.unhappy)}</td>
-                      <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(data.totals.google)}</td>
+                      <td className="px-2 py-2.5 sm:px-4 text-right">{fmtNum(data.totals.google + (data.totals.direct || 0))}</td>
+                      <td className="hidden px-2 py-2.5 text-right sm:table-cell sm:px-4">{fmtNum(data.totals.direct || 0)}</td>
                     </tr>
                   </tfoot>
                 )}

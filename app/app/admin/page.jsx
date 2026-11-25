@@ -159,7 +159,7 @@ export default async function AdminHome({ searchParams }) {
                 <dl className="flex gap-5 text-sm">
                   <Metric label="Scans" value={s.activity.scans} />
                   <Metric label="Ratings" value={s.activity.ratings} />
-                  <Metric label="→ Google" value={s.activity.googleClicks} />
+                  <Metric label="→ Google" value={s.activity.googleClicks + (s.activity.directGoogle || 0)} />
                 </dl>
                 <p className="w-full text-xs text-muted sm:w-auto sm:text-right">
                   <span className="font-semibold text-ink">{formatINR(s.monthlyPrice)}/mo</span>

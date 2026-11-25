@@ -156,6 +156,15 @@ export default function RatingFlow({ shop }) {
     </p>
   );
 
+  /** Count a first-screen "Review on Google" tap (survives the tab switching to Google). */
+  function recordDirectTap() {
+    const body = JSON.stringify({ slug: shop.slug, deviceId: getStoredDeviceId() });
+    const sent = navigator.sendBeacon?.("/api/google-direct", new Blob([body], { type: "application/json" }));
+    if (!sent) {
+      fetch("/api/google-direct", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {});
+    }
+  }
+
   // Owners can't rate or review their own shop (Google removes self-reviews).
   if (ownShop) {
     return (
@@ -249,7 +258,13 @@ export default function RatingFlow({ shop }) {
       {googleUrl && (
         <p className="mt-6 border-t border-stone-100 pt-4 text-sm text-muted">
           Prefer to write on Google directly?{" "}
-          <a href={googleUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-ink underline underline-offset-4">
+          <a
+            href={googleUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={recordDirectTap}
+            className="inline-flex items-center gap-1 font-semibold text-ink underline underline-offset-4"
+          >
             <GoogleG /> Review on Google
           </a>
         </p>

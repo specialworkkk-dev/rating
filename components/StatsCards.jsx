@@ -82,7 +82,8 @@ function StarMeter({ value }) {
 export default function StatsCards({ stats, series = [], chart = null }) {
   // A flat line of zeros says nothing, so trends appear once there is activity.
   const trend = (key) => {
-    const values = series.map((d) => d[key]);
+    // Google includes the direct "Review on Google" taps from the first screen.
+    const values = series.map((d) => (key === "google" ? d.google + (d.direct || 0) : d[key]));
     return values.length > 1 && values.some((v) => v > 0) ? values : null;
   };
   const happy = stats.breakdown[4] + stats.breakdown[5];
@@ -124,12 +125,18 @@ export default function StatsCards({ stats, series = [], chart = null }) {
           icon="google"
           tone="bg-violet-50 text-violet-600"
           label="Sent to Google"
-          hint={stats.ratings ? `${googleOfRatings}% of ratings` : "Tapped “Post on Google”"}
+          hint={
+            stats.directGoogle
+              ? `${fmtNum(stats.googleClicks)} after rating · ${fmtNum(stats.directGoogle)} direct`
+              : stats.ratings
+                ? `${googleOfRatings}% of ratings`
+                : "Tapped “Post on Google”"
+          }
           trend={trend("google")}
           trendLabel="Sent to Google per day"
-          long={isLong(stats.googleClicks)}
+          long={isLong(stats.googleClicks + (stats.directGoogle || 0))}
         >
-          <CountUp value={stats.googleClicks} />
+          <CountUp value={stats.googleClicks + (stats.directGoogle || 0)} />
         </Stat>
       </div>
 
