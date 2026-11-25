@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import { bad } from "@/lib/http";
 import { getClientIp, hashIp, MINUTE, rateLimit, tooMany } from "@/lib/rateLimit";
-import { bumpTotals } from "@/lib/totals";
+import { bumpMonth, bumpTotals } from "@/lib/totals";
 import Rating from "@/models/Rating";
 
 export async function POST(req, { params }) {
@@ -17,9 +17,12 @@ export async function POST(req, { params }) {
   const first = await Rating.findOneAndUpdate(
     { _id: id, clickedGoogle: { $ne: true } },
     { $set: { clickedGoogle: true } },
-    { projection: { shopId: 1 }, lean: true }
+    { projection: { shopId: 1, createdAt: 1 }, lean: true }
   );
-  if (first) await bumpTotals(first.shopId, { google: 1 });
+  if (first) {
+    await bumpTotals(first.shopId, { google: 1 });
+    await bumpMonth(first.shopId, first.createdAt, { google: 1 });
+  }
   else if (!(await Rating.exists({ _id: id }))) return bad("Rating not found", 404);
   return Response.json({ ok: true });
 }

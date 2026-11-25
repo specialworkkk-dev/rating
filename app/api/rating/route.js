@@ -4,7 +4,7 @@ import { rememberDevice, resolveDeviceId } from "@/lib/deviceId";
 import { bad, readJson } from "@/lib/http";
 import { firstExceeded, getClientIp, hashIp, HOUR, MINUTE, tooMany } from "@/lib/rateLimit";
 import { googleReviewUrl, HAPPY_MIN_STARS, isShopActive } from "@/lib/shop";
-import { bumpTotals } from "@/lib/totals";
+import { bumpMonth, bumpTotals, moodOf } from "@/lib/totals";
 import Rating from "@/models/Rating";
 import Shop from "@/models/Shop";
 
@@ -34,7 +34,11 @@ async function upsertRating({ shop, deviceId, stars, source, ipHash, userAgent }
 
   const before = res.value;
   const ratingId = before ? before._id : res.lastErrorObject?.upserted;
-  return { ratingId: String(ratingId), previousStars: before ? before.stars : null };
+  return {
+    ratingId: String(ratingId),
+    previousStars: before ? before.stars : null,
+    createdAt: before ? before.createdAt : now,
+  };
 }
 
 export async function POST(req) {
@@ -60,7 +64,7 @@ export async function POST(req) {
   ]);
   if (blocked) return tooMany(blocked.retryAfter);
 
-  const { ratingId, previousStars } = await upsertRating({
+  const { ratingId, previousStars, createdAt } = await upsertRating({
     shop,
     deviceId,
     stars: n,
@@ -72,8 +76,16 @@ export async function POST(req) {
 
   // Keep the shop's all-time totals in step: a new rating adds one; a changed
   // rating moves one count from the old star level to the new one.
-  if (previousStars === null) await bumpTotals(shop._id, { ratings: 1, [`stars.${n}`]: 1 });
-  else if (previousStars !== n) await bumpTotals(shop._id, { [`stars.${previousStars}`]: -1, [`stars.${n}`]: 1 });
+  if (previousStars === null) {
+    await bumpTotals(shop._id, { ratings: 1, [`stars.${n}`]: 1 });
+    await bumpMonth(shop._id, createdAt, { [moodOf(n)]: 1 });
+  } else if (previousStars !== n) {
+    await bumpTotals(shop._id, { [`stars.${previousStars}`]: -1, [`stars.${n}`]: 1 });
+    // The rating stays in the month it was first given; only its mood may change.
+    if (moodOf(previousStars) !== moodOf(n)) {
+      await bumpMonth(shop._id, createdAt, { [moodOf(previousStars)]: -1, [moodOf(n)]: 1 });
+    }
+  }
 
   return Response.json({
     ratingId,

@@ -17,6 +17,9 @@ const ShopTotalsSchema = new mongoose.Schema(
     google: { type: Number, default: 0 },
     scans: { type: Number, default: 0 },
     recomputedAt: Date,
+    // True once this shop's per-month counts (ShopMonth) were built from an
+    // exact recount; until then the monthly chart builds them first.
+    monthsReady: { type: Boolean, default: false },
   },
   { versionKey: false, timestamps: { createdAt: false, updatedAt: true } }
 );

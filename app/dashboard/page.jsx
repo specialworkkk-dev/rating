@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ActivityChart from "@/components/ActivityChart";
 import AppHeader from "@/components/AppHeader";
 import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
@@ -15,7 +16,7 @@ import { requirePageRole } from "@/lib/session";
 import { formatINR, shopPrice } from "@/lib/pricing";
 import { pauseReason } from "@/lib/shop";
 import { siteUrl } from "@/lib/site";
-import { hasAnyRating, getDailySeries, getFeedbackPage, getShopStats, normalizeRange, sinceFor } from "@/lib/stats";
+import { getDailySeries, getFeedbackPage, getMonthlySeries, getShopStats, hasAnyRating, normalizeRange, sinceFor } from "@/lib/stats";
 import Shop from "@/models/Shop";
 
 export const metadata = { title: `Dashboard · ${BRAND.name}` };
@@ -67,6 +68,10 @@ export default async function DashboardPage({ searchParams }) {
     getDailySeries(shop._id, chartDays),
     hasAnyRating(shop._id),
   ]);
+  // 7 and 30 days: a bar per day. All time: a bar per month (last 12 months),
+  // because 365 daily bars would be unreadable.
+  const monthly = range === "all";
+  const chartSeries = monthly ? await getMonthlySeries(shop._id, 12) : series;
   const ratingUrl = `${base}/r/${shop.slug}`;
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
   const daysLeft = until ? Math.max(0, Math.ceil((new Date(until) - Date.now()) / 86400000)) : null;
@@ -110,7 +115,17 @@ export default async function DashboardPage({ searchParams }) {
           </div>
         </div>
 
-        <StatsCards stats={stats} series={series} />
+        <StatsCards
+          stats={stats}
+          series={series}
+          chart={
+            <ActivityChart
+              series={chartSeries}
+              unit={monthly ? "month" : "day"}
+              title={monthly ? "Last 12 months" : chartDays === 7 ? "Last 7 days" : "Last 30 days"}
+            />
+          }
+        />
 
         <FeedbackList initial={feedback} />
 

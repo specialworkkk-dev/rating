@@ -8,14 +8,15 @@ import Rating from "../models/Rating.js";
 import Scan from "../models/Scan.js";
 import Shop from "../models/Shop.js";
 import ShopTotals from "../models/ShopTotals.js";
-import { recomputeTotals } from "../lib/totals.js";
+import { recomputeMonths, recomputeTotals } from "../lib/totals.js";
+import ShopMonth from "../models/ShopMonth.js";
 import User from "../models/User.js";
 
 await mongoose.connect(process.env.MONGODB_URI);
 const host = mongoose.connection.host;
 console.log(`Migrating ${mongoose.connection.name} on ${host}`);
 
-for (const model of [User, Shop, Rating, Feedback, Scan, RateLimit, ShopTotals]) {
+for (const model of [User, Shop, Rating, Feedback, Scan, RateLimit, ShopTotals, ShopMonth]) {
   // syncIndexes creates missing indexes and drops ones the model no longer
   // defines, e.g. the old "one feedback per rating" unique index.
   const dropped = await model.syncIndexes();
@@ -26,8 +27,11 @@ for (const model of [User, Shop, Rating, Feedback, Scan, RateLimit, ShopTotals])
 // Recompute every shop's running all-time totals exactly from the raw data.
 const shops = await Shop.find().select("_id").lean();
 const t0 = Date.now();
-for (const s of shops) await recomputeTotals(s._id);
-console.log(`  Totals    recomputed for ${shops.length} shops in ${Date.now() - t0} ms`);
+for (const s of shops) {
+  await recomputeTotals(s._id);
+  await recomputeMonths(s._id);
+}
+console.log(`  Totals    recomputed (all-time + monthly) for ${shops.length} shops in ${Date.now() - t0} ms`);
 
 await mongoose.disconnect();
 console.log("Done.");

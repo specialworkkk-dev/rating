@@ -79,7 +79,7 @@ function StarMeter({ value }) {
   );
 }
 
-export default function StatsCards({ stats, series = [] }) {
+export default function StatsCards({ stats, series = [], chart = null }) {
   // A flat line of zeros says nothing, so trends appear once there is activity.
   const trend = (key) => {
     const values = series.map((d) => d[key]);
@@ -132,6 +132,8 @@ export default function StatsCards({ stats, series = [] }) {
           <CountUp value={stats.googleClicks} />
         </Stat>
       </div>
+
+      {chart}
 
       <section className={card}>
         <h2 className="font-semibold">Ratings breakdown</h2>
