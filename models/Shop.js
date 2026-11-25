@@ -25,6 +25,9 @@ const ShopSchema = new mongoose.Schema(
     // in their dashboard ("owner") or in person when the admin set them up ("admin").
     rulesAcceptedAt: Date,
     rulesAcceptedVia: { type: String, enum: ["owner", "admin"] },
+    // The Terms of Service version the owner agreed to (see lib/legal.js), and when.
+    termsVersion: Number,
+    termsAcceptedAt: Date,
   },
   { timestamps: true }
 );

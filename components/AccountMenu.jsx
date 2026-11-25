@@ -66,6 +66,14 @@ export default function AccountMenu({ name, email, role }) {
               {role === "admin" ? "Administrator" : "Shop owner"}
             </span>
           </div>
+          <div className="flex gap-4 border-t border-stone-100 px-4 py-2.5 text-xs text-muted">
+            <a href="/terms" target="_blank" className="hover:text-ink hover:underline">
+              Terms of Service
+            </a>
+            <a href="/privacy" target="_blank" className="hover:text-ink hover:underline">
+              Privacy Policy
+            </a>
+          </div>
           <form action={logout} className="border-t border-stone-100 p-1.5">
             <button
               type="submit"

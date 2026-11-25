@@ -127,6 +127,9 @@ export default async function LoginPage() {
             <br />
             Contact your account manager.
           </p>
+          <p className="mt-4 text-center text-xs text-muted">
+            <a href="/terms" className="underline">Terms of Service</a> · <a href="/privacy" className="underline">Privacy Policy</a>
+          </p>
         </div>
       </section>
     </main>

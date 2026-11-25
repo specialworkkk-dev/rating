@@ -2,6 +2,7 @@ import Link from "next/link";
 import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
 import FairRulesAgree from "@/components/FairRulesAgree";
+import { hasAgreedToTerms } from "@/lib/legal";
 import GettingStarted from "@/components/GettingStarted";
 import PausedNotice from "@/components/PausedNotice";
 import QrPoster from "@/components/QrPoster";
@@ -79,7 +80,7 @@ export default async function DashboardPage({ searchParams }) {
 
         <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} unread={stats.unreadFeedback} />
 
-        {!shop.rulesAcceptedAt && <FairRulesAgree />}
+        {!hasAgreedToTerms(shop) && <FairRulesAgree rulesDone={Boolean(shop.rulesAcceptedAt)} />}
         {!everRated && <GettingStarted />}
 
         <div className="flex flex-wrap items-center gap-3 pt-1">

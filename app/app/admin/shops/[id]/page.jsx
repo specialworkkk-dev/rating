@@ -79,6 +79,8 @@ export default async function AdminShopPage({ params, searchParams }) {
         owner={shop.owner}
         rulesAcceptedAt={shop.rulesAcceptedAt}
         rulesAcceptedVia={shop.rulesAcceptedVia}
+        termsAgreed={shop.termsAgreed}
+        termsAcceptedAt={shop.termsAcceptedAt}
       />
       <ShopForm shop={shop} />
     </div>

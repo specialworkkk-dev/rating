@@ -5,7 +5,7 @@ import { useState } from "react";
 import FairReviewRules from "./FairReviewRules";
 import { btnPrimary, card, fmtDate, smallInputClass as input } from "./ui";
 
-export default function OwnerForm({ shopId, owner, rulesAcceptedAt, rulesAcceptedVia }) {
+export default function OwnerForm({ shopId, owner, rulesAcceptedAt, rulesAcceptedVia, termsAgreed, termsAcceptedAt }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -65,6 +65,13 @@ export default function OwnerForm({ shopId, owner, rulesAcceptedAt, rulesAccepte
           className={input}
         />
       </div>
+      {owner && (
+        <p className={`text-sm ${termsAgreed ? "text-emerald-700" : "text-amber-800"}`}>
+          {termsAgreed
+            ? `✓ Terms of Service and Privacy Policy agreed by the owner on ${fmtDate(termsAcceptedAt)}`
+            : "⚠ The owner hasn’t agreed to the Terms of Service yet. They’ll be asked on their dashboard."}
+        </p>
+      )}
       {rulesAcceptedAt ? (
         <p className="text-sm text-emerald-700">
           ✓ Fair-review rules agreed on {fmtDate(rulesAcceptedAt)}

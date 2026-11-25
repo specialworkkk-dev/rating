@@ -242,7 +242,7 @@ export default function RatingFlow({ shop }) {
         <p className="mt-1 mb-4 text-center text-sm text-muted">
           Only {shop.name} sees this, so they can put things right.
         </p>
-        <FeedbackForm ratingId={ratingId} onSent={() => thank("feedback")} />
+        <FeedbackForm ratingId={ratingId} shopName={shop.name} onSent={() => thank("feedback")} />
         {changeRating}
       </section>
     );

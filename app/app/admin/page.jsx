@@ -142,9 +142,9 @@ export default async function AdminHome({ searchParams }) {
                   <div className="flex items-center gap-2">
                     <span className="truncate font-semibold">{s.name}</span>
                     <StatusBadge shop={s} />
-                    {s.owner && !s.rulesAcceptedAt && (
+                    {s.owner && !s.termsAgreed && (
                       <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-semibold text-stone-700">
-                        rules not agreed
+                        terms not agreed
                       </span>
                     )}
                     {s.spike && (

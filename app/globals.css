@@ -20,3 +20,15 @@ body {
   background: #fafaf9;
   color: var(--color-ink);
 }
+
+/* Lists inside the Privacy Policy and Terms. */
+.legal ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.legal ul > li + li {
+  margin-top: 0.375rem;
+}
+.legal b {
+  color: var(--color-ink, #1c1917);
+}

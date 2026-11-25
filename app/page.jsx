@@ -12,6 +12,9 @@ export default function Home() {
       >
         Shop owner login
       </a>
+      <p className="mt-10 text-sm text-muted">
+        <a href="/privacy" className="underline">Privacy Policy</a> · <a href="/terms" className="underline">Terms of Service</a>
+      </p>
     </main>
   );
 }

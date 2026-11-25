@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { getStoredDeviceId } from "@/lib/clientDevice";
 import { inputClass as input } from "./ui";
 
-export default function FeedbackForm({ ratingId, onSent }) {
+export default function FeedbackForm({ ratingId, shopName, onSent }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,6 +55,12 @@ export default function FeedbackForm({ ratingId, onSent }) {
           autoComplete="tel"
         />
       </div>
+      <p className="text-xs leading-relaxed text-stone-500">
+        Name and phone are optional. If you add them, only {shopName || "the shop"} sees them, to reply to you.{" "}
+        <Link href="/privacy" target="_blank" className="underline">
+          Privacy
+        </Link>
+      </p>
       {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
       <button
         type="submit"
