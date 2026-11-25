@@ -436,19 +436,24 @@ export default function FeedbackList({ initial }) {
               ))}
             </div>
 
-            <div className="flex shrink-0 rounded-xl bg-stone-200/60 p-1 text-sm md:bg-stone-100" role="group" aria-label="Stars">
-              {[null, 1, 2, 3].map((s) => (
-                <button
-                  key={s ?? "any"}
-                  type="button"
-                  aria-pressed={stars === s}
-                  onClick={() => changeFilter(() => setStars(s))}
-                  className={`rounded-lg px-2.5 py-1.5 tabular-nums ${stars === s ? "bg-white font-medium shadow-sm" : "text-stone-600 hover:text-ink"}`}
-                >
-                  {s ? `${s}★` : "All stars"}
-                </button>
-              ))}
-            </div>
+            <label className="relative shrink-0">
+              <span className="sr-only">Filter by stars</span>
+              <select
+                value={stars ?? ""}
+                onChange={(e) => changeFilter(() => setStars(e.target.value ? Number(e.target.value) : null))}
+                className={`h-full min-h-10 appearance-none rounded-xl py-2 pr-9 pl-3.5 text-sm outline-none focus:ring-4 focus:ring-stone-900/10 ${
+                  stars ? "bg-white font-medium text-ink ring-2 ring-stone-900" : "bg-stone-200/60 text-stone-700 md:bg-stone-100"
+                }`}
+              >
+                <option value="">All stars</option>
+                <option value="1">1★ Terrible</option>
+                <option value="2">2★ Bad</option>
+                <option value="3">3★ Okay</option>
+              </select>
+              <svg viewBox="0 0 20 20" className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-stone-500" aria-hidden="true">
+                <path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </label>
             </div>
 
             <label className="relative order-first w-full md:order-none md:ml-auto md:w-64">
