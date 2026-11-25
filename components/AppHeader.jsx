@@ -49,12 +49,14 @@ export default function AppHeader({ user, shop = null, title = "", badge = 0, li
           )
         )}
 
-        <NavLinks links={links} />
+        <span className="hidden sm:block">
+          <NavLinks links={links} />
+        </span>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
           {shop && showBell && (
             <a
-              href="#feedback"
+              href="/dashboard/feedback"
               className="relative flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-ink"
               aria-label={badge ? `${badge} unread messages` : "Messages"}
               title={badge ? `${badge} unread` : "No unread messages"}
@@ -79,6 +81,11 @@ export default function AppHeader({ user, shop = null, title = "", badge = 0, li
           <AccountMenu name={user.name || ""} email={user.email} role={user.role} />
         </div>
       </div>
+      {links.length > 0 && (
+        <div className="border-t border-stone-100 sm:hidden">
+          <NavLinks links={links} variant="tabs" />
+        </div>
+      )}
     </HeaderShell>
   );
 }

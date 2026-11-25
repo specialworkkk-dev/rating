@@ -4,7 +4,6 @@ import AppHeader from "@/components/AppHeader";
 import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
 import FairRulesAgree from "@/components/FairRulesAgree";
-import FeedbackList from "@/components/FeedbackList";
 import GettingStarted from "@/components/GettingStarted";
 import PausedNotice from "@/components/PausedNotice";
 import QrPoster from "@/components/QrPoster";
@@ -12,11 +11,12 @@ import StatsCards from "@/components/StatsCards";
 import { card, fmtDate } from "@/components/ui";
 import { BRAND } from "@/lib/brand";
 import { fmtNum } from "@/lib/format";
+import { ownerLinks } from "@/lib/ownerNav";
 import { requirePageRole } from "@/lib/session";
 import { formatINR, shopPrice } from "@/lib/pricing";
 import { pauseReason } from "@/lib/shop";
 import { siteUrl } from "@/lib/site";
-import { getDailySeries, getFeedbackPage, getMonthlySeries, getShopStats, hasAnyRating, normalizeRange, sinceFor } from "@/lib/stats";
+import { getDailySeries, getMonthlySeries, getShopStats, hasAnyRating, normalizeRange, sinceFor } from "@/lib/stats";
 import Shop from "@/models/Shop";
 
 export const metadata = { title: `Dashboard · ${BRAND.name}` };
@@ -61,9 +61,8 @@ export default async function DashboardPage({ searchParams }) {
 
   const range = normalizeRange((await searchParams).range);
   const chartDays = range === "7" ? 7 : 30;
-  const [stats, feedback, base, series, everRated] = await Promise.all([
+  const [stats, base, series, everRated] = await Promise.all([
     getShopStats(shop._id, sinceFor(range)),
-    getFeedbackPage(shop._id),
     siteUrl(),
     getDailySeries(shop._id, chartDays),
     hasAnyRating(shop._id),
@@ -92,9 +91,9 @@ export default async function DashboardPage({ searchParams }) {
 
   return (
     <>
-      <AppHeader user={user} shop={shop} badge={stats.unreadFeedback} />
+      <AppHeader user={user} shop={shop} badge={stats.unreadFeedback} links={ownerLinks(stats.unreadFeedback)} />
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6">
-        <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} />
+        <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} unread={stats.unreadFeedback} />
 
         {!shop.rulesAcceptedAt && <FairRulesAgree />}
         {!everRated && <GettingStarted />}
@@ -126,8 +125,6 @@ export default async function DashboardPage({ searchParams }) {
             />
           }
         />
-
-        <FeedbackList initial={feedback} />
 
         <QrPoster
           endpoint="/api/dashboard/qr"

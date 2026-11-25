@@ -8,7 +8,7 @@ function greeting() {
 }
 
 /** Welcome banner at the top of the owner dashboard. */
-export default function DashboardHero({ shop, planText, summary, ratingUrl }) {
+export default function DashboardHero({ shop, planText, summary, ratingUrl, unread = 0 }) {
   const initials = shop.name
     .split(/\s+/)
     .slice(0, 2)
@@ -52,6 +52,15 @@ export default function DashboardHero({ shop, planText, summary, ratingUrl }) {
           <p className="mt-5 max-w-xl text-stone-300">{summary}</p>
 
           <div className="mt-6 flex flex-wrap gap-3">
+            {unread > 0 && (
+              <a
+                href="/dashboard/feedback"
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-stone-950 hover:bg-stone-100"
+              >
+                Open feedback
+                <span className="rounded-full bg-red-600 px-1.5 text-xs leading-5 text-white tabular-nums">{unread > 99 ? "99+" : unread}</span>
+              </a>
+            )}
             <a href="#poster" className="rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-stone-950 hover:bg-brand-100">
               Get QR poster
             </a>
