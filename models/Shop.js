@@ -28,8 +28,14 @@ const ShopSchema = new mongoose.Schema(
     // The Terms of Service version the owner agreed to (see lib/legal.js), and when.
     termsVersion: Number,
     termsAcceptedAt: Date,
+    // When the shop was last paused, for the "delete within 90 days" reminder.
+    pausedAt: Date,
   },
   { timestamps: true }
 );
+
+ShopSchema.pre("save", function () {
+  if (this.isModified("status")) this.pausedAt = this.status === "paused" ? new Date() : undefined;
+});
 
 export default mongoose.models.Shop || mongoose.model("Shop", ShopSchema);

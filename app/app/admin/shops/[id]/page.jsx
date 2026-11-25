@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import BillingPanel from "@/components/BillingPanel";
 import CopyButton from "@/components/CopyButton";
+import DeleteShopPanel from "@/components/DeleteShopPanel";
 import OwnerForm from "@/components/OwnerForm";
 import QrPoster from "@/components/QrPoster";
 import ShopForm from "@/components/ShopForm";
@@ -15,6 +16,8 @@ import { adminShop } from "@/lib/shopInput";
 import { siteUrl } from "@/lib/site";
 import { getShopSpike } from "@/lib/spike";
 import { getShopStats, getSuspiciousBursts, sinceFor } from "@/lib/stats";
+import { getTotals } from "@/lib/totals";
+import Feedback from "@/models/Feedback";
 import Shop from "@/models/Shop";
 import User from "@/models/User";
 
@@ -30,11 +33,13 @@ export default async function AdminShopPage({ params, searchParams }) {
   if (!doc) notFound();
   const owner = doc.ownerId ? await User.findById(doc.ownerId).select("name email").lean() : null;
   const shop = adminShop(doc, owner);
-  const [stats, base, bursts, spike] = await Promise.all([
+  const [stats, base, bursts, spike, totals, feedbackCount] = await Promise.all([
     getShopStats(doc._id, sinceFor("30")),
     siteUrl(),
     getSuspiciousBursts(doc._id),
     getShopSpike(doc._id),
+    getTotals(doc._id),
+    Feedback.countDocuments({ shopId: doc._id }),
   ]);
   const ratingUrl = `${base}/r/${shop.slug}`;
 
@@ -83,6 +88,10 @@ export default async function AdminShopPage({ params, searchParams }) {
         termsAcceptedAt={shop.termsAcceptedAt}
       />
       <ShopForm shop={shop} />
+      <DeleteShopPanel
+        shop={shop}
+        counts={{ ratings: totals.ratings, feedback: feedbackCount, scans: totals.scans + (totals.direct || 0) }}
+      />
     </div>
   );
 }

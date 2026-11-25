@@ -9,6 +9,7 @@ import { formatINR } from "@/lib/pricing";
 import { isShopActive } from "@/lib/shop";
 import { adminShop } from "@/lib/shopInput";
 import { getSpikesByShop } from "@/lib/spike";
+import { DELETE_REMINDER_DAYS, DELETE_WITHIN_DAYS, inactiveSince } from "@/lib/deleteShop";
 import { getServiceAlerts } from "@/lib/services";
 import { getActivityByShop, getBurstCountsByShop } from "@/lib/stats";
 import Shop from "@/models/Shop";
@@ -17,6 +18,14 @@ import User from "@/models/User";
 export const metadata = { title: "Admin · Review Booster" };
 
 const PAGE_SIZES = [5, 10, 15, 25];
+
+/** For shops stopped 75+ days ago: the date their data should be deleted by. */
+function deleteReminder(shop) {
+  const since = inactiveSince(shop);
+  if (!since) return null;
+  const days = (Date.now() - new Date(since)) / 864e5;
+  return days >= DELETE_REMINDER_DAYS ? new Date(new Date(since).getTime() + DELETE_WITHIN_DAYS * 864e5).toISOString() : null;
+}
 
 /** Which billing bucket a shop is in right now. */
 function category(s) {
@@ -52,6 +61,7 @@ export default async function AdminHome({ searchParams }) {
     activity: activity[String(s._id)] || { scans: 0, ratings: 0, googleClicks: 0, unread: 0 },
     bursts: bursts[String(s._id)] || 0,
     spike: spikes[String(s._id)] || null,
+    deleteBy: deleteReminder(s),
   }));
   for (const s of shops) s.category = category(s);
 
@@ -91,6 +101,11 @@ export default async function AdminHome({ searchParams }) {
 
   return (
     <div className="space-y-5">
+      {sp.deleted && (
+        <p className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900 ring-1 ring-emerald-200" role="status">
+          ✓ “{String(sp.deleted).slice(0, 100)}” and all its data were deleted.
+        </p>
+      )}
       {serviceAlerts.length > 0 && (
         <Link
           href="/app/admin/services"
@@ -155,6 +170,11 @@ export default async function AdminHome({ searchParams }) {
                     {s.bursts > 0 && (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
                         ⚠ unusual activity
+                      </span>
+                    )}
+                    {s.deleteBy && (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800" title="Stopped long ago. If the shop has left, download a copy if needed and delete it.">
+                        🗑 delete by {fmtDate(s.deleteBy)}
                       </span>
                     )}
                     {s.activity.unread > 0 && (
