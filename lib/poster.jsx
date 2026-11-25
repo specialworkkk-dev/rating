@@ -1,8 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { unstable_cache } from "next/cache";
 import { ImageResponse } from "next/og";
 import { PDFDocument } from "pdf-lib";
 import QRCode from "qrcode";
+import { POSTER_DESIGN } from "@/lib/posterDesign";
+import { shopTag } from "@/lib/shopCache";
 
 // Every poster size is ISO A-series, so one layout (1 : √2) fits all of them.
 export const POSTER_SIZES = {
@@ -264,22 +267,47 @@ export async function renderPosterPng({ shop, url, preview = false }) {
   return Buffer.from(await image.arrayBuffer());
 }
 
-/** Wrap the PNG in a single-page PDF at the chosen paper size. */
-export async function renderPosterPdf({ shop, url, size = "a4" }) {
-  const png = await renderPosterPng({ shop, url });
-  const [w, h] = (POSTER_SIZES[size] || POSTER_SIZES.a4).pt;
-  const pdf = await PDFDocument.create();
-  pdf.setTitle(`${shop.name} – rating poster`);
-  pdf.setCreator("Review Booster");
-  const page = pdf.addPage([w, h]);
-  const img = await pdf.embedPng(png);
-  page.drawImage(img, { x: 0, y: 0, width: w, height: h });
-  return Buffer.from(await pdf.save());
+/**
+ * Generating a poster takes seconds (drawing the image, then packing the PDF),
+ * so finished files are kept in Next.js's data cache. The key includes
+ * everything that changes the picture (shop details via updatedAt, the link,
+ * the poster design version), and admin edits clear the shop's tag, so a
+ * stale poster is never served. Stored as base64 because the cache holds JSON.
+ */
+function cachedFile(shop, url, parts, make) {
+  const version = shop.updatedAt ? new Date(shop.updatedAt).getTime() : 0;
+  return unstable_cache(
+    async () => Buffer.from(await make()).toString("base64"),
+    ["poster", POSTER_DESIGN, shop.slug, String(version), url, ...parts],
+    { tags: [shopTag(shop.slug)], revalidate: 30 * 24 * 60 * 60 }
+  )().then((b64) => Buffer.from(b64, "base64"));
+}
+
+const printPng = (shop, url) => cachedFile(shop, url, ["png", "print"], () => renderPosterPng({ shop, url }));
+
+async function makeFile(shop, url, format, size, preview) {
+  if (format === "qr") return cachedFile(shop, url, ["qr"], () => qrPng(url));
+  if (format === "png") {
+    return preview ? cachedFile(shop, url, ["png", "preview"], () => renderPosterPng({ shop, url, preview: true })) : printPng(shop, url);
+  }
+  // PDFs reuse the cached print image, so each paper size only pays for packing.
+  return cachedFile(shop, url, ["pdf", size], async () => {
+    const png = await printPng(shop, url);
+    const [w, h] = POSTER_SIZES[size].pt;
+    const pdf = await PDFDocument.create();
+    pdf.setTitle(`${shop.name} – rating poster`);
+    pdf.setCreator("Review Booster");
+    const page = pdf.addPage([w, h]);
+    const img = await pdf.embedPng(png);
+    page.drawImage(img, { x: 0, y: 0, width: w, height: h });
+    return Buffer.from(await pdf.save());
+  });
 }
 
 /**
  * Build the download response for GET …/qr.
- * Query: format=pdf|png|qr (default pdf), size=a4|a5|a6, preview=1, inline=1
+ * Query: format=pdf|png|qr (default pdf), size=a4|a5|a6, preview=1, inline=1,
+ * warm=1 (prepare and cache the file, reply 204 with no body).
  */
 export async function posterResponse(req, shop, ratingUrl) {
   const q = new URL(req.url).searchParams;
@@ -288,27 +316,22 @@ export async function posterResponse(req, shop, ratingUrl) {
   const preview = q.get("preview") === "1";
   const inline = preview || q.get("inline") === "1";
 
-  let body, type, filename;
-  if (format === "qr") {
-    body = await qrPng(ratingUrl);
-    type = "image/png";
-    filename = `qr-${shop.slug}.png`;
-  } else if (format === "png") {
-    body = await renderPosterPng({ shop, url: ratingUrl, preview });
-    type = "image/png";
-    filename = `rating-poster-${shop.slug}.png`;
-  } else {
-    body = await renderPosterPdf({ shop, url: ratingUrl, size });
-    type = "application/pdf";
-    filename = `rating-poster-${shop.slug}-${size}.pdf`;
-  }
+  const body = await makeFile(shop, ratingUrl, format, size, preview);
+  if (q.get("warm") === "1") return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+
+  const [type, filename] =
+    format === "qr"
+      ? ["image/png", `qr-${shop.slug}.png`]
+      : format === "png"
+        ? ["image/png", `rating-poster-${shop.slug}.png`]
+        : ["application/pdf", `rating-poster-${shop.slug}-${size}.pdf`];
 
   return new Response(body, {
     headers: {
       "Content-Type": type,
+      "Content-Length": String(body.length),
       "Content-Disposition": `${inline ? "inline" : "attachment"}; filename="${filename}"`,
-      // Previews are versioned (?v=slug-updatedAt), so the browser can keep them;
-      // downloads are always generated fresh.
+      // Previews are versioned (?v=…), so the browser can keep them.
       "Cache-Control": preview ? "private, max-age=86400" : "private, no-store",
     },
   });

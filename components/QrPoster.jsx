@@ -33,6 +33,75 @@ export default function QrPoster({ endpoint, ratingUrl, version = "" }) {
   }, [previewSrc]);
   const nfcUrl = `${ratingUrl}?src=nfc`;
   const v = encodeURIComponent(version);
+  const [busy, setBusy] = useState(null); // which download is being prepared
+  const [done, setDone] = useState(null);
+  const [error, setError] = useState("");
+
+  // Once the preview is showing, quietly prepare the PDF for the selected
+  // paper size on the server (A5 by default, and again whenever the size
+  // changes), so tapping "Download PDF" is quick. Each file is built once per
+  // shop version and then kept, so this costs nothing on later visits.
+  useEffect(() => {
+    if (!loaded) return;
+    const t = setTimeout(() => {
+      fetch(`${endpoint}?format=pdf&size=${size}&warm=1&v=${v}`).catch(() => {});
+      fetch(`${endpoint}?format=qr&warm=1&v=${v}`).catch(() => {}); // cheap; cached after the first time
+    }, 400);
+    return () => clearTimeout(t);
+  }, [loaded, size, endpoint, v]);
+
+  /** Fetch the file with a visible loader, then hand it to the browser to save. */
+  async function download(key, query, filename) {
+    if (busy) return;
+    setBusy(key);
+    setDone(null);
+    setError("");
+    try {
+      const res = await fetch(`${endpoint}?${query}&v=${v}`);
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      // Use the server's file name (includes the shop), falling back to ours.
+      const named = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") || "")?.[1];
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = named || filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 10_000);
+      setDone(key);
+      setTimeout(() => setDone((d) => (d === key ? null : d)), 3000);
+    } catch {
+      setError("Couldn’t prepare the file. Check your connection and try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // A plain helper (not a component defined inside this one), so React keeps
+  // the same button between renders.
+  const dlButton = ({ id, query, filename, primary, children }) => (
+    <button
+      key={id}
+      type="button"
+      onClick={() => download(id, query, filename)}
+      disabled={Boolean(busy)}
+      aria-busy={busy === id}
+      className={`${primary ? btnPrimary : btnSecondary} min-w-32 gap-2 disabled:cursor-wait ${busy && busy !== id ? "opacity-50" : ""}`}
+    >
+      {busy === id ? (
+        <>
+          <span className={`size-4 animate-spin rounded-full border-2 ${primary ? "border-white/30 border-t-white" : "border-stone-300 border-t-stone-700"}`} aria-hidden="true" />
+          Preparing…
+        </>
+      ) : done === id ? (
+        <>✓ Downloaded</>
+      ) : (
+        children
+      )}
+    </button>
+  );
 
   return (
     <section id="poster" className={`${card} scroll-mt-20`}>
@@ -87,17 +156,12 @@ export default function QrPoster({ endpoint, ratingUrl, version = "" }) {
           </fieldset>
 
           <div className="flex flex-wrap gap-2">
-            <a href={`${endpoint}?format=pdf&size=${size}&v=${v}`} className={btnPrimary} download>
-              Download PDF
-            </a>
-            <a href={`${endpoint}?format=png&v=${v}`} className={btnSecondary} download>
-              Poster PNG
-            </a>
-            <a href={`${endpoint}?format=qr&v=${v}`} className={btnSecondary} download>
-              QR code only
-            </a>
+            {dlButton({ id: `pdf-${size}`, query: `format=pdf&size=${size}`, filename: `rating-poster-${size}.pdf`, primary: true, children: "Download PDF" })}
+            {dlButton({ id: "png", query: "format=png", filename: "rating-poster.png", children: "Poster PNG" })}
+            {dlButton({ id: "qr", query: "format=qr", filename: "qr-code.png", children: "QR code only" })}
           </div>
           <p className="text-xs text-muted">
+            {error && <span className="mb-1 block text-red-600">{error}</span>}
             The PDF prints edge to edge at the chosen size. “QR code only” is for printers who design
             their own standee.
           </p>
