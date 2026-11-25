@@ -1,8 +1,9 @@
 import "./globals.css";
+import { BRAND } from "@/lib/brand";
 
 export const metadata = {
-  title: "Review Booster",
-  description: "Make reviewing easy for every customer, and hear about problems early.",
+  title: BRAND.name,
+  description: BRAND.tagline,
 };
 
 export const viewport = {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import StatusBadge from "@/components/StatusBadge";
 import { btnPrimary, card, fmtDate } from "@/components/ui";
 import { requirePageRole } from "@/lib/session";
+import { formatINR } from "@/lib/pricing";
 import { isShopActive } from "@/lib/shop";
 import { adminShop } from "@/lib/shopInput";
 import { getActivityByShop, getBurstCountsByShop } from "@/lib/stats";
@@ -9,8 +10,6 @@ import Shop from "@/models/Shop";
 import User from "@/models/User";
 
 export const metadata = { title: "Admin · Review Booster" };
-
-const PRICE = 499;
 
 export default async function AdminHome() {
   await requirePageRole("admin");
@@ -31,10 +30,12 @@ export default async function AdminHome() {
     bursts: bursts[String(s._id)] || 0,
   }));
 
-  const paying = shops.filter((s) => s.status === "active" && s.live).length;
+  const payingShops = shops.filter((s) => s.status === "active" && s.live);
+  const paying = payingShops.length;
   const trials = shops.filter((s) => s.status === "trial" && s.live).length;
   const due = shops.filter((s) => s.status !== "paused" && !s.live).length;
-  const mrr = paying * PRICE;
+  // Each shop pays its own agreed price.
+  const mrr = payingShops.reduce((sum, s) => sum + s.monthlyPrice, 0);
 
   return (
     <div className="space-y-5">
@@ -44,8 +45,8 @@ export default async function AdminHome() {
         <Summary label="Trial ended / due" value={due} accent={due ? "text-red-600" : ""} />
         <Summary
           label="Monthly revenue"
-          value={`₹${mrr.toLocaleString("en-IN")}`}
-          hint={`≈ ₹${Math.round(mrr / 30).toLocaleString("en-IN")}/day · goal ₹5,000/day`}
+          value={formatINR(mrr)}
+          hint={`≈ ${formatINR(mrr / 30)}/day · goal ₹5,000/day`}
         />
       </div>
 
@@ -97,6 +98,9 @@ export default async function AdminHome() {
                   <Metric label="→ Google" value={s.activity.googleClicks} />
                 </dl>
                 <p className="w-full text-xs text-muted sm:w-auto sm:text-right">
+                  <span className="font-semibold text-ink">{formatINR(s.monthlyPrice)}/mo</span>
+                  <br className="hidden sm:block" />
+                  <span className="sm:hidden"> · </span>
                   {s.status === "trial"
                     ? `Trial until ${fmtDate(s.trialEndsAt)}`
                     : s.status === "active"

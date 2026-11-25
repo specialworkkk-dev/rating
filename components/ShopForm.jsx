@@ -28,6 +28,7 @@ export default function ShopForm({ shop }) {
     googlePlaceId: shop?.googlePlaceId || "",
     logoUrl: shop?.logoUrl || "",
     alertEmail: shop?.alertEmail || "",
+    ...(shop ? {} : { monthlyPrice: "499" }),
   });
   const [slugTouched, setSlugTouched] = useState(editing);
   const [busy, setBusy] = useState(false);
@@ -65,7 +66,7 @@ export default function ShopForm({ shop }) {
     const res = await fetch(editing ? `/api/admin/shops/${shop.id}` : "/api/admin/shops", {
       method: editing ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(f),
+      body: JSON.stringify(editing ? f : { ...f, monthlyPrice: Number(f.monthlyPrice) }),
     }).catch(() => null);
     const json = await res?.json().catch(() => ({}));
     setBusy(false);
@@ -154,6 +155,26 @@ export default function ShopForm({ shop }) {
           </label>
         </div>
       </Field>
+
+      {!editing && (
+        <Field label="Monthly price" hint="What this shop will pay after the free trial. You can change it any time.">
+          <span className="flex w-48 items-center rounded-lg border border-stone-300 bg-white focus-within:border-brand-500">
+            <span className="pl-3 text-sm text-muted">₹</span>
+            <input
+              type="number"
+              min={0}
+              max={1000000}
+              step={1}
+              inputMode="numeric"
+              required
+              value={f.monthlyPrice}
+              onChange={set("monthlyPrice")}
+              className="w-full bg-transparent px-2 py-2 text-sm tabular-nums outline-none"
+            />
+            <span className="pr-3 text-sm text-muted">/mo</span>
+          </span>
+        </Field>
+      )}
 
       <Field label="Alert email" hint="Where bad-rating alerts go. Defaults to the owner’s login email.">
         <input type="email" value={f.alertEmail} onChange={set("alertEmail")} className={input} />

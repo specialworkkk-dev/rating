@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import RatingFlow from "@/components/RatingFlow";
 import ShopHeader from "@/components/ShopHeader";
 import { connectDB } from "@/lib/db";
+import { BRAND } from "@/lib/brand";
 import { publicShop } from "@/lib/shop";
+import Unavailable from "./Unavailable";
 import Shop from "@/models/Shop";
 
 // Status (trial / paid / paused) must take effect immediately.
@@ -35,15 +37,9 @@ export default async function RatePage({ params, searchParams }) {
       {shop.active ? (
         <RatingFlow shop={shop} source={src === "nfc" ? "nfc" : "qr"} />
       ) : (
-        <section className="mt-10 rounded-2xl bg-white p-6 text-center shadow-sm ring-1 ring-stone-200">
-          <p className="text-4xl">⏸️</p>
-          <h2 className="mt-3 text-lg font-semibold">Service paused</h2>
-          <p className="mt-1 text-muted">
-            Ratings for {shop.name} are not being collected right now. Thank you for visiting!
-          </p>
-        </section>
+        <Unavailable shopName={shop.name} />
       )}
-      <p className="mt-auto pt-10 text-center text-xs text-stone-400">Powered by Review Booster</p>
+      <p className="mt-auto pt-10 text-center text-xs text-stone-400">Powered by {BRAND.name}</p>
     </main>
   );
 }

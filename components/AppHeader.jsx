@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { logout } from "@/app/login/actions";
+import { BRAND } from "@/lib/brand";
+import BrandMark from "./BrandMark";
 
 export default function AppHeader({ title, user, badge = 0, links = [] }) {
   return (
     <header className="border-b border-stone-200 bg-white">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-        <Link href="/" className="font-bold tracking-tight">
-          Review Booster
+        <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
+          <BrandMark className="size-7" />
+          <span className="hidden sm:inline">{BRAND.name}</span>
         </Link>
         <span className="text-stone-300">/</span>
         <span className="flex items-center gap-2 font-medium">

@@ -19,6 +19,8 @@ const ShopSchema = new mongoose.Schema(
     trialEndsAt: Date,
     paidUntil: Date,
     plan: { type: String, enum: ["basic", "premium"], default: "basic" },
+    // What this shop pays per month, in rupees. Set per shop by the admin.
+    monthlyPrice: { type: Number, default: 499, min: 0, max: 1_000_000 },
     // When the owner agreed to the fair-review rules (Google policy), and how:
     // in their dashboard ("owner") or in person when the admin set them up ("admin").
     rulesAcceptedAt: Date,

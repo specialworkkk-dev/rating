@@ -3,16 +3,19 @@ import AppHeader from "@/components/AppHeader";
 import FairReviewRules from "@/components/FairReviewRules";
 import FairRulesAgree from "@/components/FairRulesAgree";
 import FeedbackList from "@/components/FeedbackList";
+import PausedNotice from "@/components/PausedNotice";
 import QrPoster from "@/components/QrPoster";
 import StatsCards from "@/components/StatsCards";
 import { card, fmtDate } from "@/components/ui";
+import { BRAND } from "@/lib/brand";
 import { requirePageRole } from "@/lib/session";
-import { isShopActive } from "@/lib/shop";
+import { formatINR, shopPrice } from "@/lib/pricing";
+import { pauseReason } from "@/lib/shop";
 import { siteUrl } from "@/lib/site";
 import { getFeedbackList, getShopStats, normalizeRange, sinceFor } from "@/lib/stats";
 import Shop from "@/models/Shop";
 
-export const metadata = { title: "Dashboard · Review Booster" };
+export const metadata = { title: `Dashboard · ${BRAND.name}` };
 
 const RANGES = [
   { key: "7", label: "7 days" },
@@ -35,6 +38,23 @@ export default async function DashboardPage({ searchParams }) {
     );
   }
 
+  // While paused, the owner sees only the paused notice: clear, and no data shown.
+  const paused = pauseReason(shop);
+  if (paused) {
+    return (
+      <>
+        <AppHeader title={shop.name} user={user} />
+        <main className="px-4 py-10 sm:py-16">
+          <PausedNotice
+            reason={paused}
+            shopName={shop.name}
+            endedAt={shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil}
+          />
+        </main>
+      </>
+    );
+  }
+
   const range = normalizeRange((await searchParams).range);
   const [stats, feedback, base] = await Promise.all([
     getShopStats(shop._id, sinceFor(range)),
@@ -42,20 +62,12 @@ export default async function DashboardPage({ searchParams }) {
     siteUrl(),
   ]);
   const ratingUrl = `${base}/r/${shop.slug}`;
-  const active = isShopActive(shop);
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
 
   return (
     <>
       <AppHeader title={shop.name} user={user} badge={stats.unreadFeedback} />
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6">
-        {!active && (
-          <p className="rounded-2xl bg-red-50 p-4 text-sm text-red-800 ring-1 ring-red-200">
-            Your rating page is <strong>paused</strong>, so customers can’t rate you right now.
-            Renew your plan to switch it back on.
-          </p>
-        )}
-
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex rounded-lg bg-stone-200/60 p-1 text-sm">
             {RANGES.map((r) => (
@@ -69,8 +81,14 @@ export default async function DashboardPage({ searchParams }) {
             ))}
           </div>
           <p className="ml-auto text-sm text-muted">
-            {shop.status === "trial" ? "Free trial" : shop.status === "active" ? "Plan" : "Paused"}
-            {until && shop.status !== "paused" ? ` until ${fmtDate(until)}` : ""}
+            {shop.status === "trial" ? (
+              <>Free trial{until ? ` until ${fmtDate(until)}` : ""}</>
+            ) : (
+              <>
+                Plan <span className="font-medium text-ink">{formatINR(shopPrice(shop))}/month</span>
+                {until ? ` · paid until ${fmtDate(until)}` : ""}
+              </>
+            )}
           </p>
         </div>
 
