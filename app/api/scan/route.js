@@ -1,12 +1,12 @@
 import { connectDB } from "@/lib/db";
 import { bad, readJson } from "@/lib/http";
-import { getClientIp, rateLimit, tooMany } from "@/lib/rateLimit";
+import { getClientIp, hashIp, MINUTE, rateLimit, tooMany } from "@/lib/rateLimit";
 import { isShopActive } from "@/lib/shop";
 import Scan from "@/models/Scan";
 import Shop from "@/models/Shop";
 
 export async function POST(req) {
-  const rl = rateLimit(`scan:${getClientIp(req)}`, { limit: 30, windowMs: 10 * 60_000 });
+  const rl = await rateLimit(`scan:${hashIp(getClientIp(req))}`, { limit: 60, windowMs: 10 * MINUTE });
   if (!rl.ok) return tooMany(rl.retryAfter);
 
   const { slug, source } = await readJson(req);

@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import { bad } from "@/lib/http";
-import { getClientIp, rateLimit, tooMany } from "@/lib/rateLimit";
+import { getClientIp, hashIp, MINUTE, rateLimit, tooMany } from "@/lib/rateLimit";
 import Rating from "@/models/Rating";
 
 export async function POST(req, { params }) {
-  const rl = rateLimit(`gclick:${getClientIp(req)}`, { limit: 30, windowMs: 10 * 60_000 });
+  const rl = await rateLimit(`gclick:${hashIp(getClientIp(req))}`, { limit: 60, windowMs: 10 * MINUTE });
   if (!rl.ok) return tooMany(rl.retryAfter);
 
   const { id } = await params;

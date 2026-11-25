@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getStoredDeviceId } from "@/lib/clientDevice";
 import { inputClass as input } from "./ui";
 
 export default function FeedbackForm({ ratingId, onSent }) {
@@ -16,10 +17,10 @@ export default function FeedbackForm({ ratingId, onSent }) {
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ratingId, ...data }),
+        body: JSON.stringify({ ratingId, deviceId: getStoredDeviceId(), ...data }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok && res.status !== 409) throw new Error(json.error || "Something went wrong");
+      if (!res.ok) throw new Error(json.error || "Something went wrong");
       onSent();
     } catch (err) {
       setError(err.message);

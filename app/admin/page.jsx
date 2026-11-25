@@ -4,7 +4,7 @@ import { btnPrimary, card, fmtDate } from "@/components/ui";
 import { requirePageRole } from "@/lib/session";
 import { isShopActive } from "@/lib/shop";
 import { adminShop } from "@/lib/shopInput";
-import { getActivityByShop } from "@/lib/stats";
+import { getActivityByShop, getBurstCountsByShop } from "@/lib/stats";
 import Shop from "@/models/Shop";
 import User from "@/models/User";
 
@@ -15,9 +15,10 @@ const PRICE = 499;
 export default async function AdminHome() {
   await requirePageRole("admin");
 
-  const [docs, activity] = await Promise.all([
+  const [docs, activity, bursts] = await Promise.all([
     Shop.find().sort({ createdAt: -1 }).lean(),
     getActivityByShop(30),
+    getBurstCountsByShop(),
   ]);
   const owners = await User.find({ _id: { $in: docs.map((s) => s.ownerId).filter(Boolean) } })
     .select("name email")
@@ -27,6 +28,7 @@ export default async function AdminHome() {
     ...adminShop(s, ownerById[String(s.ownerId)]),
     live: isShopActive(s),
     activity: activity[String(s._id)] || { scans: 0, ratings: 0, googleClicks: 0, unread: 0 },
+    bursts: bursts[String(s._id)] || 0,
   }));
 
   const paying = shops.filter((s) => s.status === "active" && s.live).length;
@@ -68,6 +70,11 @@ export default async function AdminHome() {
                   <div className="flex items-center gap-2">
                     <span className="truncate font-semibold">{s.name}</span>
                     <StatusBadge shop={s} />
+                    {s.bursts > 0 && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                        ⚠ unusual activity
+                      </span>
+                    )}
                     {s.activity.unread > 0 && (
                       <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
                         {s.activity.unread} unread

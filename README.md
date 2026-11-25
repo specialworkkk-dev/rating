@@ -31,6 +31,18 @@ Logo upload needs the `CLOUDINARY_*` keys in `.env.local`; without them, paste a
 `npm run db:dev` listens on port 27017 by default (`DEV_DB_PORT` to change it).
 Add `?src=nfc` to a rating link to count the scan as an NFC tap.
 
+## Anti-spam rules
+
+- **One rating per device per shop.** A random device ID lives in an httpOnly cookie (400 days) with a
+  backup copy in localStorage. Rating again updates the same rating, like editing a Google review.
+- **Every complaint is kept.** One feedback entry per device per shop per day; a second message the
+  same day is appended to it (no second alert). Feedback can only be attached to your own rating.
+- **IP addresses are never stored**, only a keyed hash (`IP_HASH_SECRET`, falls back to `AUTH_SECRET`),
+  used for burst limits and to flag "many ratings from one network within an hour" in admin.
+- **Rate limits live in MongoDB** (`ratelimits`, auto-expiring), so they hold across serverless instances.
+- After changing indexes in `models/`, run `npm run migrate` (and against production with
+  `MONGODB_URI=... npm run migrate`) **before** deploying.
+
 ## Build progress (MASTER.md §13)
 
 - [x] Day 1 — setup, cached MongoDB connection, models, Tailwind

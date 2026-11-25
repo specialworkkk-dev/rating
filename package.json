@@ -9,7 +9,8 @@
     "start": "next start",
     "db:dev": "node scripts/dev-db.mjs",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
-    "create-admin": "node --env-file=.env.local scripts/create-admin.mjs"
+    "create-admin": "node --env-file=.env.local scripts/create-admin.mjs",
+    "migrate": "node --env-file=.env.local scripts/migrate.mjs"
   },
   "dependencies": {
     "bcryptjs": "3.0.3",

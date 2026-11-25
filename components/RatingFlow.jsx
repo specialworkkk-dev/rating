@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getStoredDeviceId, storeDeviceId } from "@/lib/clientDevice";
 import FeedbackForm from "./FeedbackForm";
 import GoogleReviewLink from "./GoogleReviewLink";
 import StarRating from "./StarRating";
@@ -30,6 +31,7 @@ export default function RatingFlow({ shop, source }) {
   const [ratingId, setRatingId] = useState(null);
   const [googleUrl, setGoogleUrl] = useState(shop.googleReviewUrl);
   const [thanksFor, setThanksFor] = useState(null); // "google" | "feedback"
+  const [previousStars, setPreviousStars] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -41,11 +43,13 @@ export default function RatingFlow({ shop, source }) {
       const res = await fetch("/api/rating", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: shop.slug, stars: n, source }),
+        body: JSON.stringify({ slug: shop.slug, stars: n, source, deviceId: getStoredDeviceId() }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "Couldn’t save your rating. Please try again.");
       setRatingId(json.ratingId);
+      storeDeviceId(json.deviceId);
+      setPreviousStars(json.updated && json.previousStars !== n ? json.previousStars : null);
       setGoogleUrl(json.googleReviewUrl);
       setStep(json.next === "google" ? "google" : "feedback");
     } catch (err) {
@@ -62,6 +66,13 @@ export default function RatingFlow({ shop, source }) {
   }
 
   const card = "mt-8 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-stone-200";
+
+  // A returning customer updates their one rating instead of adding another.
+  const updatedNote = previousStars ? (
+    <p className="mb-4 rounded-xl bg-stone-50 px-3 py-2 text-center text-xs text-muted">
+      You rated us {previousStars}★ before. We’ve updated it to {stars}★.
+    </p>
+  ) : null;
 
   if (step === "thanks") {
     return (
@@ -80,6 +91,7 @@ export default function RatingFlow({ shop, source }) {
   if (step === "google") {
     return (
       <section className={`${card} text-center`}>
+        {updatedNote}
         <p className="text-4xl">{stars === 5 ? "🤩" : "😊"}</p>
         <h2 className="mt-3 text-xl font-semibold">Glad you liked it!</h2>
         {googleUrl ? (
@@ -104,6 +116,7 @@ export default function RatingFlow({ shop, source }) {
   if (step === "feedback") {
     return (
       <section className={card}>
+        {updatedNote}
         <div className="text-center">
           <p className="text-4xl">😔</p>
           <h2 className="mt-3 text-xl font-semibold">Sorry about that!</h2>
