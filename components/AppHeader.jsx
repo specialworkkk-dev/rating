@@ -1,45 +1,84 @@
 import Link from "next/link";
-import { logout } from "@/app/login/actions";
 import { BRAND } from "@/lib/brand";
+import AccountMenu from "./AccountMenu";
 import BrandMark from "./BrandMark";
+import HeaderShell from "./HeaderShell";
+import NavLinks from "./NavLinks";
 
-export default function AppHeader({ title, user, badge = 0, links = [] }) {
+function shopInitials(name) {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("");
+}
+
+/**
+ * App bar for owners and admins.
+ * - owner: pass `shop` ({ name, logoUrl }) and `badge` (unread complaints)
+ * - admin: pass `title` and `links`
+ */
+export default function AppHeader({ user, shop = null, title = "", badge = 0, links = [], showBell = true }) {
   return (
-    <header className="border-b border-stone-200 bg-white">
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
-          <BrandMark className="size-7" />
-          <span className="hidden sm:inline">{BRAND.name}</span>
+    <HeaderShell>
+      <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5 rounded-lg" aria-label={`${BRAND.name} home`}>
+          <BrandMark className="size-8" />
+          <span className="hidden text-[15px] font-bold tracking-tight sm:inline">{BRAND.name}</span>
         </Link>
-        <span className="text-stone-300">/</span>
-        <span className="flex items-center gap-2 font-medium">
-          {title}
-          {badge > 0 && (
+
+        <span className="hidden h-6 w-px bg-stone-200 sm:block" aria-hidden="true" />
+
+        {shop ? (
+          <div className="flex min-w-0 items-center gap-2.5">
+            {shop.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={shop.logoUrl} alt="" className="size-7 shrink-0 rounded-lg object-cover ring-1 ring-stone-200" />
+            ) : (
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-[11px] font-bold text-brand-700">
+                {shopInitials(shop.name)}
+              </span>
+            )}
+            <span className="truncate text-[15px] font-semibold">{shop.name}</span>
+          </div>
+        ) : (
+          title && (
+            <span className="rounded-md bg-stone-900 px-2 py-0.5 text-xs font-semibold tracking-wide text-white uppercase">
+              {title}
+            </span>
+          )
+        )}
+
+        <NavLinks links={links} />
+
+        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          {shop && showBell && (
             <a
               href="#feedback"
-              className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white"
-              aria-label={`${badge} unread messages`}
+              className="relative flex size-10 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-ink"
+              aria-label={badge ? `${badge} unread messages` : "Messages"}
+              title={badge ? `${badge} unread` : "No unread messages"}
             >
-              {badge}
+              <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+                <path
+                  d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.9"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {badge > 0 && (
+                <span className="absolute top-1 right-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] leading-none font-bold text-white ring-2 ring-white">
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
             </a>
           )}
-        </span>
-        <nav className="flex gap-3 text-sm text-stone-600">
-          {links.map((l) => (
-            <Link key={l.href} href={l.href} className="hover:text-ink">
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-3 text-sm">
-          <span className="hidden text-muted sm:inline">{user.email}</span>
-          <form action={logout}>
-            <button type="submit" className="font-medium text-stone-600 hover:text-ink">
-              Log out
-            </button>
-          </form>
+          <AccountMenu name={user.name || ""} email={user.email} role={user.role} />
         </div>
       </div>
-    </header>
+    </HeaderShell>
   );
 }

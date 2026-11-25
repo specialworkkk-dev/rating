@@ -33,7 +33,7 @@ export default async function DashboardPage({ searchParams }) {
   if (!shop) {
     return (
       <>
-        <AppHeader title="Dashboard" user={user} />
+        <AppHeader user={user} />
         <main className="mx-auto max-w-5xl px-4 py-10">
           <p className={card}>Your account isn’t linked to a shop yet. Please contact support.</p>
         </main>
@@ -46,7 +46,7 @@ export default async function DashboardPage({ searchParams }) {
   if (paused) {
     return (
       <>
-        <AppHeader title={shop.name} user={user} />
+        <AppHeader user={user} shop={shop} showBell={false} />
         <main className="px-4 py-10 sm:py-16">
           <PausedNotice
             reason={paused}
@@ -87,7 +87,7 @@ export default async function DashboardPage({ searchParams }) {
 
   return (
     <>
-      <AppHeader title={shop.name} user={user} badge={stats.unreadFeedback} />
+      <AppHeader user={user} shop={shop} badge={stats.unreadFeedback} />
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6">
         <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} />
 
