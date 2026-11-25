@@ -1,4 +1,6 @@
 import Link from "next/link";
+import AdminShopFilters from "@/components/AdminShopFilters";
+import Pagination from "@/components/Pagination";
 import StatusBadge from "@/components/StatusBadge";
 import { btnPrimary, card, fmtDate } from "@/components/ui";
 import { requirePageRole } from "@/lib/session";
@@ -11,7 +13,23 @@ import User from "@/models/User";
 
 export const metadata = { title: "Admin · Review Booster" };
 
-export default async function AdminHome() {
+const PAGE_SIZE = 20;
+
+/** Which billing bucket a shop is in right now. */
+function category(s) {
+  if (s.status === "paused") return "paused";
+  if (!s.live) return "due";
+  return s.status === "active" ? "paid" : "trial";
+}
+
+const SORTERS = {
+  new: (a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""),
+  name: (a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
+  price: (a, b) => b.monthlyPrice - a.monthlyPrice,
+  activity: (a, b) => b.activity.ratings - a.activity.ratings,
+};
+
+export default async function AdminHome({ searchParams }) {
   await requirePageRole("admin");
 
   const [docs, activity, bursts] = await Promise.all([
@@ -29,6 +47,7 @@ export default async function AdminHome() {
     activity: activity[String(s._id)] || { scans: 0, ratings: 0, googleClicks: 0, unread: 0 },
     bursts: bursts[String(s._id)] || 0,
   }));
+  for (const s of shops) s.category = category(s);
 
   const payingShops = shops.filter((s) => s.status === "active" && s.live);
   const paying = payingShops.length;
@@ -36,6 +55,31 @@ export default async function AdminHome() {
   const due = shops.filter((s) => s.status !== "paused" && !s.live).length;
   // Each shop pays its own agreed price.
   const mrr = payingShops.reduce((sum, s) => sum + s.monthlyPrice, 0);
+
+  // Filters, sort and pagination (all shops are small enough to do in memory).
+  const sp = await searchParams;
+  const q = String(sp.q || "").trim().toLowerCase();
+  const status = ["paid", "trial", "due", "paused"].includes(sp.status) ? sp.status : "all";
+  const sort = SORTERS[sp.sort] ? sp.sort : "new";
+  const counts = { all: shops.length, paid: 0, trial: 0, due: 0, paused: 0 };
+  for (const s of shops) counts[s.category] += 1;
+
+  const filtered = shops
+    .filter((s) => status === "all" || s.category === status)
+    .filter((s) => !q || [s.name, s.slug, s.owner?.email, s.owner?.name].some((v) => v?.toLowerCase().includes(q)))
+    .sort(SORTERS[sort]);
+  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const page = Math.min(Math.max(1, Number(sp.page) || 1), pages);
+  const pageShops = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const hrefFor = (n) => {
+    const next = new URLSearchParams();
+    if (q) next.set("q", sp.q);
+    if (status !== "all") next.set("status", status);
+    if (sort !== "new") next.set("sort", sort);
+    if (n > 1) next.set("page", String(n));
+    const qs = next.toString();
+    return qs ? `/admin?${qs}` : "/admin";
+  };
 
   return (
     <div className="space-y-5">
@@ -51,17 +95,26 @@ export default async function AdminHome() {
       </div>
 
       <div className="flex items-center">
-        <h1 className="text-xl font-bold">Shops ({shops.length})</h1>
+        <h1 className="text-xl font-bold">Shops</h1>
         <Link href="/admin/shops/new" className={`${btnPrimary} ml-auto`}>
           + Add shop
         </Link>
       </div>
 
+      {shops.length > 0 && <AdminShopFilters counts={counts} />}
+
       {shops.length === 0 ? (
         <p className={`${card} text-center text-muted`}>No shops yet. Add your first one.</p>
+      ) : pageShops.length === 0 ? (
+        <div className={`${card} text-center`}>
+          <p className="font-medium">No shops match these filters</p>
+          <Link href="/admin" className="mt-2 inline-block text-sm font-medium text-brand-700 underline">
+            Clear filters
+          </Link>
+        </div>
       ) : (
         <ul className="space-y-3">
-          {shops.map((s) => (
+          {pageShops.map((s) => (
             <li key={s.id}>
               <Link
                 href={`/admin/shops/${s.id}`}
@@ -114,6 +167,14 @@ export default async function AdminHome() {
           ))}
         </ul>
       )}
+      <Pagination
+        page={page}
+        pages={pages}
+        total={filtered.length}
+        pageSize={PAGE_SIZE}
+        hrefFor={hrefFor}
+        noun={filtered.length === 1 ? "shop" : "shops"}
+      />
       <p className="text-xs text-muted">Scans, ratings and Google clicks are for the last 30 days.</p>
     </div>
   );

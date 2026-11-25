@@ -1,5 +1,4 @@
 import Link from "next/link";
-import ActivityChart from "@/components/ActivityChart";
 import AppHeader from "@/components/AppHeader";
 import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
@@ -15,7 +14,7 @@ import { requirePageRole } from "@/lib/session";
 import { formatINR, shopPrice } from "@/lib/pricing";
 import { pauseReason } from "@/lib/shop";
 import { siteUrl } from "@/lib/site";
-import { countAllRatings, getDailySeries, getFeedbackList, getShopStats, normalizeRange, sinceFor } from "@/lib/stats";
+import { countAllRatings, getDailySeries, getFeedbackPage, getShopStats, normalizeRange, sinceFor } from "@/lib/stats";
 import Shop from "@/models/Shop";
 
 export const metadata = { title: `Dashboard · ${BRAND.name}` };
@@ -62,7 +61,7 @@ export default async function DashboardPage({ searchParams }) {
   const chartDays = range === "7" ? 7 : 30;
   const [stats, feedback, base, series, everRated] = await Promise.all([
     getShopStats(shop._id, sinceFor(range)),
-    getFeedbackList(shop._id),
+    getFeedbackPage(shop._id),
     siteUrl(),
     getDailySeries(shop._id, chartDays),
     countAllRatings(shop._id),
@@ -110,11 +109,7 @@ export default async function DashboardPage({ searchParams }) {
           </div>
         </div>
 
-        <StatsCards
-          stats={stats}
-          series={series}
-          chart={<ActivityChart series={series} title={chartDays === 7 ? "Last 7 days" : "Last 30 days"} />}
-        />
+        <StatsCards stats={stats} series={series} />
 
         <FeedbackList initial={feedback} />
 
