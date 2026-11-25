@@ -8,6 +8,7 @@ import QrPoster from "@/components/QrPoster";
 import StatsCards from "@/components/StatsCards";
 import { card, fmtDate } from "@/components/ui";
 import { BRAND } from "@/lib/brand";
+import { POSTER_DESIGN } from "@/lib/posterDesign";
 import { fmtNum } from "@/lib/format";
 import { getOwnerContext } from "@/lib/ownerContext";
 import { formatINR, shopPrice } from "@/lib/pricing";
@@ -98,7 +99,7 @@ export default async function DashboardPage({ searchParams }) {
         <QrPoster
           endpoint="/api/dashboard/qr"
           ratingUrl={ratingUrl}
-          version={`${shop.slug}-${shop.updatedAt?.getTime?.() ?? ""}`}
+          version={`${shop.slug}-${shop.updatedAt?.getTime?.() ?? ""}-${POSTER_DESIGN}`}
         />
         {shop.rulesAcceptedAt && (
           <details className={`${card} group`}>

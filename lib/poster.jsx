@@ -125,7 +125,6 @@ function Poster({ shop, url, qr, logo, width }) {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase())
     .join("");
-  const displayUrl = url.replace(/^https?:\/\//, "");
   const name = nameLayout(shop.name, u);
 
   return (
@@ -245,7 +244,6 @@ function Poster({ shop, url, qr, logo, width }) {
         }}
       >
         <div style={{ fontSize: 3.6 * u, fontWeight: 700 }}>{nb("Takes 10 seconds · No app needed")}</div>
-        <div style={{ marginTop: 0.8 * u, fontSize: 2.2 * u, color: "#fff8eb" }}>{displayUrl}</div>
       </div>
     </div>
   );

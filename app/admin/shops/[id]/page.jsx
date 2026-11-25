@@ -1,3 +1,4 @@
+import { POSTER_DESIGN } from "@/lib/posterDesign";
 import mongoose from "mongoose";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -67,7 +68,7 @@ export default async function AdminShopPage({ params, searchParams }) {
       <QrPoster
         endpoint={`/api/admin/shops/${shop.id}/qr`}
         ratingUrl={ratingUrl}
-        version={`${shop.slug}-${doc.updatedAt?.getTime?.() ?? ""}`}
+        version={`${shop.slug}-${doc.updatedAt?.getTime?.() ?? ""}-${POSTER_DESIGN}`}
       />
       <OwnerForm
         shopId={shop.id}
