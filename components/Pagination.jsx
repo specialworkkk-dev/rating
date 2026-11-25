@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { fmtNum } from "@/lib/format";
+import PageSizeSelect from "./PageSizeSelect";
 
 /** Page numbers to show: first, last, current ±1, with gaps as null. */
 function pageList(page, pages) {
@@ -17,7 +18,7 @@ function pageList(page, pages) {
  * Works in both worlds: pass `hrefFor(page)` for links (server pages) or
  * `onChange(page)` for buttons (client components).
  */
-export default function Pagination({ page, pages, total, pageSize, hrefFor, onChange, noun = "items" }) {
+export default function Pagination({ page, pages, total, pageSize, hrefFor, onChange, onPageSizeChange, noun = "items" }) {
   if (total === 0) return null;
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
@@ -50,10 +51,13 @@ export default function Pagination({ page, pages, total, pageSize, hrefFor, onCh
 
   return (
     <nav className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-4" aria-label="Pagination">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <p className="text-sm text-muted">
         Showing <span className="font-medium text-ink tabular-nums">{fmtNum(from)}–{fmtNum(to)}</span> of{" "}
         <span className="font-medium text-ink tabular-nums">{fmtNum(total)}</span> {noun}
       </p>
+      <PageSizeSelect value={pageSize} onChange={onPageSizeChange} />
+      </div>
       {pages > 1 && (
         <div className="flex items-center gap-1">
           {item(page - 1, "‹ Prev", { disabled: page <= 1, aria: "Previous page" })}

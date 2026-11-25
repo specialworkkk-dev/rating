@@ -14,7 +14,7 @@ import User from "@/models/User";
 
 export const metadata = { title: "Admin · Review Booster" };
 
-const PAGE_SIZE = 20;
+const PAGE_SIZES = [5, 10, 15, 25];
 
 /** Which billing bucket a shop is in right now. */
 function category(s) {
@@ -69,14 +69,16 @@ export default async function AdminHome({ searchParams }) {
     .filter((s) => status === "all" || s.category === status)
     .filter((s) => !q || [s.name, s.slug, s.owner?.email, s.owner?.name].some((v) => v?.toLowerCase().includes(q)))
     .sort(SORTERS[sort]);
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageSize = PAGE_SIZES.includes(Number(sp.per)) ? Number(sp.per) : 10;
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const page = Math.min(Math.max(1, Number(sp.page) || 1), pages);
-  const pageShops = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageShops = filtered.slice((page - 1) * pageSize, page * pageSize);
   const hrefFor = (n) => {
     const next = new URLSearchParams();
     if (q) next.set("q", sp.q);
     if (status !== "all") next.set("status", status);
     if (sort !== "new") next.set("sort", sort);
+    if (pageSize !== 10) next.set("per", String(pageSize));
     if (n > 1) next.set("page", String(n));
     const qs = next.toString();
     return qs ? `/admin?${qs}` : "/admin";
@@ -172,7 +174,7 @@ export default async function AdminHome({ searchParams }) {
         page={page}
         pages={pages}
         total={filtered.length}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         hrefFor={hrefFor}
         noun={filtered.length === 1 ? "shop" : "shops"}
       />
