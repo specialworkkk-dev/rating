@@ -17,3 +17,10 @@ build/
 .DS_Store
 *.log
 next-env.d.ts
+
+# token sub-project (build output, local deployments)
+token/node_modules/
+token/artifacts/
+token/cache/
+token/deployments/localhost.json
+token/deployments/hardhat.json

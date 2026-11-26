@@ -1,7 +1,7 @@
 import Link from "next/link";
 import LegalPage, { ContactEmail } from "@/components/LegalPage";
 import { FAIR_RULES } from "@/lib/fairRules";
-import { LEGAL } from "@/lib/legal";
+import { LEGAL, TOKEN_TERMS } from "@/lib/legal";
 
 const P = LEGAL.provider;
 
@@ -137,7 +137,8 @@ const sections = [
           <Link href="/privacy" className="font-medium text-brand-700 underline">
             Privacy Policy
           </Link>
-          . Your ratings, feedback and settings belong to you; we use them only to provide the service.
+          . Your ratings, feedback and settings belong to you; we use them only to provide the service
+          {TOKEN_TERMS ? " and, as daily totals across all shops, for the public token burn described in “Review Booster Token”" : ""}.
         </p>
       </>
     ),
@@ -205,6 +206,32 @@ const sections = [
       </p>
     ),
   },
+  ...(TOKEN_TERMS
+    ? [
+        {
+          id: "token",
+          title: "Review Booster Token (RBT)",
+          body: (
+            <>
+              <p>
+                {P} has a digital token, the Review Booster Token (RBT), on BNB Smart Chain. Each day, the{" "}
+                <b>total number of ratings across all shops</b> on {P} is used to set how many RBT are permanently removed
+                (“burned”) from a public burn pool. Every burn can be checked by anyone on BscScan.
+              </p>
+              <ul>
+                <li>
+                  Only a single daily count is used. <b>No names, phone numbers, messages, devices or shop-level figures</b> are
+                  shared or put on the blockchain.
+                </li>
+                <li>It does not change your service, your price, your figures or how your customers rate you.</li>
+                <li>You are not asked to buy, hold or promote RBT, and it is not part of your plan or payment.</li>
+                <li>RBT is not an investment offer from {P}, and no one is promised that its price will rise.</li>
+              </ul>
+            </>
+          ),
+        },
+      ]
+    : []),
   {
     id: "law",
     title: "Law and disputes",

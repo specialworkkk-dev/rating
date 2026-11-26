@@ -32,7 +32,7 @@ export default function FairRulesAgree({ rulesDone = false }) {
         <h2 className="text-lg font-semibold">{rulesDone ? "Please agree to our Terms of Service" : "Before you start: our terms and Google’s review rules"}</h2>
         <p className="mt-1 text-sm text-muted">
           {rulesDone
-            ? "We’ve added Terms of Service and a Privacy Policy. They cover your price, payments, refunds and how to handle customers’ details."
+            ? "Our Terms of Service have been updated. Please read them and agree to keep using your dashboard."
             : "These keep your Google reviews safe. Please read them and agree to continue."}
         </p>
       </div>
