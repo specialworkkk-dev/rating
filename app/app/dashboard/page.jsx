@@ -3,6 +3,7 @@ import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
 import FairRulesAgree from "@/components/FairRulesAgree";
 import { hasAgreedToTerms } from "@/lib/legal";
+import { getTermsVersion } from "@/lib/tokenSettings";
 import GettingStarted from "@/components/GettingStarted";
 import PausedNotice from "@/components/PausedNotice";
 import QrPoster from "@/components/QrPoster";
@@ -48,12 +49,13 @@ export default async function DashboardPage({ searchParams }) {
   const range = normalizeRange((await searchParams).range);
   const sparkDays = range === "7" ? 7 : 30;
   // Everything loads in parallel; the day-by-day series feeds the sparklines.
-  const [stats, base, series, everRated, spike] = await Promise.all([
+  const [stats, base, series, everRated, spike, termsVersion] = await Promise.all([
     getShopStats(shop._id, sinceFor(range)),
     siteUrl(),
     getDailySeries(shop._id, sparkDays),
     hasAnyRating(shop._id),
     getShopSpike(shop._id),
+    getTermsVersion(),
   ]);
   const ratingUrl = `${base}/r/${shop.slug}`;
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
@@ -80,7 +82,7 @@ export default async function DashboardPage({ searchParams }) {
 
         <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} unread={stats.unreadFeedback} />
 
-        {!hasAgreedToTerms(shop) && <FairRulesAgree rulesDone={Boolean(shop.rulesAcceptedAt)} />}
+        {!hasAgreedToTerms(shop, termsVersion) && <FairRulesAgree rulesDone={Boolean(shop.rulesAcceptedAt)} />}
         {!everRated && <GettingStarted />}
 
         <div className="flex flex-wrap items-center gap-3 pt-1">

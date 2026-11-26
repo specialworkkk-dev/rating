@@ -15,6 +15,7 @@ import { btnSecondary, card } from "@/components/ui";
 import { requirePageRole } from "@/lib/session";
 import { adminShop } from "@/lib/shopInput";
 import { siteUrl } from "@/lib/site";
+import { getTermsVersion } from "@/lib/tokenSettings";
 import { getShopSpike } from "@/lib/spike";
 import StatsCards from "@/components/StatsCards";
 import { fmtNum } from "@/lib/format";
@@ -42,7 +43,7 @@ export default async function AdminShopPage({ params, searchParams }) {
   const doc = await Shop.findById(id).lean();
   if (!doc) notFound();
   const owner = doc.ownerId ? await User.findById(doc.ownerId).select("name email").lean() : null;
-  const shop = adminShop(doc, owner);
+  const shop = adminShop(doc, owner, await getTermsVersion());
   const [stats, base, bursts, spike, totals, feedbackCount, series] = await Promise.all([
     getShopStats(doc._id, sinceFor(range)),
     siteUrl(),

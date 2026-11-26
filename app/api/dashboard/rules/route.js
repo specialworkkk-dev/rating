@@ -1,4 +1,4 @@
-import { TERMS_VERSION } from "@/lib/legal";
+import { getTermsVersion } from "@/lib/tokenSettings";
 import { requireApiRole } from "@/lib/session";
 import Shop from "@/models/Shop";
 
@@ -11,6 +11,6 @@ export async function POST() {
     { _id: user.shopId, rulesAcceptedAt: { $exists: false } },
     { $set: { rulesAcceptedAt: now, rulesAcceptedVia: "owner" } }
   );
-  await Shop.updateOne({ _id: user.shopId }, { $set: { termsVersion: TERMS_VERSION, termsAcceptedAt: now } });
+  await Shop.updateOne({ _id: user.shopId }, { $set: { termsVersion: await getTermsVersion(), termsAcceptedAt: now } });
   return Response.json({ ok: true });
 }

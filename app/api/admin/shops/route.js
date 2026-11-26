@@ -1,4 +1,5 @@
 import { bad, readJson } from "@/lib/http";
+import { getTermsVersion } from "@/lib/tokenSettings";
 import { requireApiRole } from "@/lib/session";
 import { clearShopCache } from "@/lib/shopCache";
 import { adminShop, parseShopInput } from "@/lib/shopInput";
@@ -16,7 +17,8 @@ export async function GET() {
     .select("name email")
     .lean();
   const byId = Object.fromEntries(owners.map((o) => [String(o._id), o]));
-  return Response.json({ shops: shops.map((s) => adminShop(s, byId[String(s.ownerId)])) });
+  const termsVersion = await getTermsVersion();
+  return Response.json({ shops: shops.map((s) => adminShop(s, byId[String(s.ownerId)], termsVersion)) });
 }
 
 export async function POST(req) {
@@ -35,7 +37,7 @@ export async function POST(req) {
   try {
     const shop = await Shop.create(data);
     clearShopCache(shop.slug); // a "not found" for this link may have been cached
-    return Response.json({ shop: adminShop(shop.toObject()) }, { status: 201 });
+    return Response.json({ shop: adminShop(shop.toObject(), null, await getTermsVersion()) }, { status: 201 });
   } catch (err) {
     if (err?.code === 11000) return bad("That link name is already taken", 409);
     throw err;

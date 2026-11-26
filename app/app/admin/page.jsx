@@ -12,6 +12,7 @@ import { adminShop } from "@/lib/shopInput";
 import { getSpikesByShop } from "@/lib/spike";
 import { DELETE_REMINDER_DAYS, DELETE_WITHIN_DAYS, inactiveSince } from "@/lib/deleteShop";
 import { getServiceAlerts } from "@/lib/services";
+import { getTermsVersion } from "@/lib/tokenSettings";
 import { getActivityByShop, getBurstCountsByShop } from "@/lib/stats";
 import Shop from "@/models/Shop";
 import User from "@/models/User";
@@ -45,19 +46,20 @@ const SORTERS = {
 export default async function AdminHome({ searchParams }) {
   await requirePageRole("admin");
 
-  const [docs, activity, bursts, spikes, serviceAlerts] = await Promise.all([
+  const [docs, activity, bursts, spikes, serviceAlerts, termsVersion] = await Promise.all([
     Shop.find().sort({ createdAt: -1 }).lean(),
     getActivityByShop(30),
     getBurstCountsByShop(),
     getSpikesByShop(),
     getServiceAlerts(),
+    getTermsVersion(),
   ]);
   const owners = await User.find({ _id: { $in: docs.map((s) => s.ownerId).filter(Boolean) } })
     .select("name email")
     .lean();
   const ownerById = Object.fromEntries(owners.map((o) => [String(o._id), o]));
   const shops = docs.map((s) => ({
-    ...adminShop(s, ownerById[String(s.ownerId)]),
+    ...adminShop(s, ownerById[String(s.ownerId)], termsVersion),
     live: isShopActive(s),
     activity: activity[String(s._id)] || { scans: 0, ratings: 0, googleClicks: 0, unread: 0 },
     bursts: bursts[String(s._id)] || 0,

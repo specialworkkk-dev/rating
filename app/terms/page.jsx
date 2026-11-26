@@ -1,7 +1,8 @@
 import Link from "next/link";
 import LegalPage, { ContactEmail } from "@/components/LegalPage";
 import { FAIR_RULES } from "@/lib/fairRules";
-import { LEGAL, TOKEN_TERMS } from "@/lib/legal";
+import { LEGAL } from "@/lib/legal";
+import { getTokenSettings } from "@/lib/tokenSettings";
 
 const P = LEGAL.provider;
 
@@ -10,7 +11,8 @@ export const metadata = {
   description: `The agreement between ${P} and the shops that use it: price, payment, refunds and fair-review rules.`,
 };
 
-const sections = [
+// TOKEN_TERMS: the admin's "Owners told" switch (Admin → Token).
+const buildSections = (TOKEN_TERMS) => [
   {
     id: "service",
     title: "The service",
@@ -259,7 +261,11 @@ const sections = [
   },
 ];
 
-export default function TermsPage() {
+// Reads the admin's switch on each visit, so turning it on or off shows at once.
+export const dynamic = "force-dynamic";
+
+export default async function TermsPage() {
+  const sections = buildSections((await getTokenSettings()).ownersTold.on);
   return (
     <LegalPage
       title="Terms of Service"

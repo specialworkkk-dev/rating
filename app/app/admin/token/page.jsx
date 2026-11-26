@@ -1,5 +1,7 @@
 import BurnNowButton from "@/components/BurnNowButton";
+import TokenSwitches from "@/components/TokenSwitches";
 import TokenWallet from "@/components/TokenWallet";
+import { getTokenSettings } from "@/lib/tokenSettings";
 import { card } from "@/components/ui";
 import { fmtNum } from "@/lib/format";
 import { requirePageRole } from "@/lib/session";
@@ -47,7 +49,7 @@ function Figure({ label, value, hint }) {
 
 export default async function TokenPage() {
   await requirePageRole("admin");
-  const { config: c, chain, burns, error } = await getTokenStatus();
+  const [{ config: c, chain, burns, error }, settings] = await Promise.all([getTokenStatus(), getTokenSettings()]);
   const confirmed = burns.filter((b) => b.status === "confirmed");
   const recentDaily = confirmed.slice(0, 7).reduce((a, b) => a + (b.tokens || 0), 0) / Math.max(1, Math.min(7, confirmed.length));
   const poolDaysLeft = chain?.burnPool && recentDaily ? Math.round(chain.burnPool / recentDaily) : null;
@@ -68,6 +70,11 @@ export default async function TokenPage() {
           </span>
         )}
       </div>
+
+      <TokenSwitches
+        settings={settings}
+        vesting={chain?.vesting ? { cliff: fmtUnix(chain.vesting.cliff), end: fmtUnix(chain.vesting.end) } : null}
+      />
 
       {!c.configured ? (
         <section className={`${card} space-y-2 text-sm`}>

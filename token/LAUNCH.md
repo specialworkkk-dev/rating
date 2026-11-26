@@ -91,7 +91,7 @@ wallet could be taken, not all 20 crore.
 
 ## Step 4: tell the shop owners (still before mainnet)
 
-1. In Vercel, add `NEXT_PUBLIC_TOKEN_TERMS=on`, then redeploy.
+1. In **Admin → Token → Switches**, turn on **"Owners told"**. It takes effect at once, with no redeploy.
 2. The Terms of Service now include a "Review Booster Token" section. **Every owner is asked to agree again** on their dashboard.
 3. The admin Shops list shows "terms not agreed" until each owner has agreed.
 
@@ -132,10 +132,13 @@ Customers see nothing: no token wording anywhere on the rating pages.
    TOKEN_ADDRESS / TOKEN_VESTING_ADDRESS / wallets   (the real ones)
    TOKEN_BURN_WALLET_KEY=0x...    (real hot burn wallet, Secret)
    TOKEN_BURN_START=<launch day>
-   TOKEN_LEGAL_OK=yes             (only with the lawyer's written OK)
    ```
 
-2. Keep `NEXT_PUBLIC_TOKEN_TERMS=on`.
+2. In **Admin → Token → Switches**:
+   - keep **"Owners told"** on;
+   - turn on **"Lawyer & CA approved"** (type APPROVED), only with their written OK.
+
+   Both switches are recorded with your email and the time.
 3. Fund the hot burn wallet:
    - send 1–2 months of burns from the reserve (example: 5,000 ratings a day × 10 × 60 days = 30,00,000 RBT);
    - send a little BNB for fees.
@@ -146,6 +149,7 @@ Customers see nothing: no token wording anywhere on the rating pages.
 - **Admin → Token:**
   - if the burn wallet shows fewer than 14 days of burns, top it up from the reserve;
   - if the gas shows "Low", add a little BNB.
+- To stop burning at any moment, use **Admin → Token → "Pause daily burns"**. Days missed while paused are burned afterwards, up to 7 per night.
 - A day marked **"Check BscScan"** means a crash happened mid-burn. Open the burn wallet on BscScan and confirm the burn for that day happened once. The app never sends a second burn for the same day.
 - **Team tokens:**
   - after the cliff, open the TeamVesting contract on BscScan → Write Contract → `release(token)`, and the unlocked part goes to the Team wallet;

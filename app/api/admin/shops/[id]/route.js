@@ -4,6 +4,7 @@ import { requireApiRole } from "@/lib/session";
 import { clearShopCache } from "@/lib/shopCache";
 import { deleteShopAndData } from "@/lib/deleteShop";
 import { addMonths, adminShop, parseShopInput } from "@/lib/shopInput";
+import { getTermsVersion } from "@/lib/tokenSettings";
 import Shop from "@/models/Shop";
 import User from "@/models/User";
 
@@ -44,7 +45,7 @@ export async function PATCH(req, { params }) {
   clearShopCache(oldSlug, shop.slug);
 
   const owner = shop.ownerId ? await User.findById(shop.ownerId).select("name email").lean() : null;
-  return Response.json({ shop: adminShop(shop.toObject(), owner) });
+  return Response.json({ shop: adminShop(shop.toObject(), owner, await getTermsVersion()) });
 }
 
 /** Permanently delete a shop and all its data. Body: { confirm: "<the shop's link name>" }. */
