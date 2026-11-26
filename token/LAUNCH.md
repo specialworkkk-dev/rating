@@ -8,7 +8,7 @@ is real money and only happens after Step 0.
 
 - **Name and network:** Review Booster Token (RBT), on BNB Smart Chain (BEP-20).
 - **Supply:** 100 crore (1,000,000,000), all created once. No one can ever create more.
-- **50% team:** goes into a public time-lock contract (TeamVesting). Nothing unlocks for 6 months; then it unlocks steadily until month 24.
+- **50% team:** **50 lakh** go straight to the Team wallet at launch. The other **49.5 crore** go into a public time-lock contract (TeamVesting): nothing unlocks for 6 months, then a quarter unlocks at once and the rest steadily until month 24.
 - **30% liquidity:** for the PancakeSwap pool.
 - **20% burn pool:** burned at 10 RBT per real customer rating, once a day.
 
@@ -24,7 +24,7 @@ is real money and only happens after Step 0.
 
    Keep their written OK.
 2. **Write the public token document.** It should state:
-   - the 50/30/20 split and all contract addresses;
+   - the 50/30/20 split and all contract addresses, including "Team: 50 lakh free at launch, 49.5 crore locked";
    - the team lock dates;
    - the burn rule ("10 RBT per real rating, daily, from the burn pool");
    - **no promise of any price**.
@@ -58,6 +58,7 @@ wallet could be taken, not all 20 crore.
    ```
    DEPLOYER_KEY=0x...            # Deployer wallet private key (testnet use)
    TEAM_WALLET=0x...
+   TEAM_UNLOCKED_NOW=5000000     # 50 lakh free at launch (0 = all locked)
    LIQUIDITY_WALLET=0x...
    BURN_WALLET=0x...             # the burn RESERVE (cold) wallet's address
    VEST_CLIFF_MONTHS=6
@@ -108,7 +109,7 @@ Customers see nothing: no token wording anywhere on the rating pages.
 3. Run `npm run deploy:mainnet`, then run both `npx hardhat verify ...` commands. The contracts are now readable on bscscan.com.
 4. **Check on BscScan before anything else:**
    - total supply is 1,000,000,000;
-   - the TeamVesting contract holds 50%;
+   - the Team wallet holds 50 lakh and the TeamVesting contract holds 49.5 crore;
    - the Liquidity wallet holds 30%;
    - the burn reserve holds 20%.
 5. **Empty the Deployer wallet.** It should hold no RBT. Send any leftover BNB to the Liquidity wallet.

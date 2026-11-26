@@ -33,6 +33,14 @@ async function main() {
   const burnPool = local ? process.env.BURN_WALLET || signers[3].address : need("BURN_WALLET");
   if (new Set([team, liquidity, burnPool]).size !== 3) throw new Error("TEAM_WALLET, LIQUIDITY_WALLET and BURN_WALLET must be three different wallets");
 
+  // Part of the team's 50% that is free at launch (whole tokens); the rest is time-locked.
+  const unlockedTokens = Number(process.env.TEAM_UNLOCKED_NOW ?? 5_000_000);
+  if (!Number.isInteger(unlockedTokens) || unlockedTokens < 0 || unlockedTokens > 500_000_000) {
+    throw new Error("TEAM_UNLOCKED_NOW must be a whole number of tokens from 0 to 500000000");
+  }
+  const unlocked = ethers.parseEther(String(unlockedTokens));
+  const fmt = (n) => n.toLocaleString("en-IN");
+
   const now = Math.floor(Date.now() / 1000);
   const start = Number(process.env.VEST_START || now);
   const cliffMonths = Number(process.env.VEST_CLIFF_MONTHS || 6);
@@ -42,13 +50,13 @@ async function main() {
   const bnb = ethers.formatEther(await ethers.provider.getBalance(deployer.address));
   console.log(`Network: ${network.name} (chain ${network.config.chainId ?? "local"})`);
   console.log(`Deployer: ${deployer.address}  balance ${bnb} BNB`);
-  console.log(`Team 50% locked for ${cliffMonths} months, then released until month ${months} -> ${team}`);
+  console.log(`Team 50%: ${fmt(unlockedTokens)} free now, ${fmt(500_000_000 - unlockedTokens)} locked for ${cliffMonths} months, then released until month ${months} -> ${team}`);
   console.log(`Liquidity 30% -> ${liquidity}`);
   console.log(`Burn pool 20% -> ${burnPool}`);
 
   const vesting = await ethers.deployContract("TeamVesting", [team, start, months * MONTH, cliffMonths * MONTH]);
   await vesting.waitForDeployment();
-  const token = await ethers.deployContract("ReviewBoosterToken", [await vesting.getAddress(), liquidity, burnPool]);
+  const token = await ethers.deployContract("ReviewBoosterToken", [await vesting.getAddress(), team, unlocked, liquidity, burnPool]);
   await token.waitForDeployment();
 
   const out = {
@@ -57,6 +65,7 @@ async function main() {
     token: await token.getAddress(),
     teamVesting: await vesting.getAddress(),
     teamWallet: team,
+    teamUnlockedAtLaunch: unlockedTokens,
     liquidityWallet: liquidity,
     burnWallet: burnPool,
     vesting: { start, cliffMonths, months },
@@ -69,7 +78,7 @@ async function main() {
   if (!local) {
     console.log(`\nPublish the code on BscScan (needs ETHERSCAN_API_KEY in token/.env):`);
     console.log(`npx hardhat verify --network ${network.name} ${out.teamVesting} ${team} ${start} ${months * MONTH} ${cliffMonths * MONTH}`);
-    console.log(`npx hardhat verify --network ${network.name} ${out.token} ${out.teamVesting} ${liquidity} ${burnPool}`);
+    console.log(`npx hardhat verify --network ${network.name} ${out.token} ${out.teamVesting} ${team} ${unlocked} ${liquidity} ${burnPool}`);
   }
   console.log(`\nFor the web app (.env.local / Vercel):\nTOKEN_NETWORK=${network.name === "bsc" ? "bsc" : network.name === "bscTestnet" ? "bsc-testnet" : "local"}\nTOKEN_ADDRESS=${out.token}\nTOKEN_VESTING_ADDRESS=${out.teamVesting}\nTOKEN_LIQUIDITY_WALLET=${liquidity}`);
 }

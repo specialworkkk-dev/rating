@@ -6,12 +6,17 @@ const T = (n) => ethers.parseEther(String(n)); // whole tokens -> 18-decimal uni
 const SUPPLY = T(1_000_000_000);
 const MONTH = 30 * 24 * 60 * 60;
 
-async function deploy() {
+const UNLOCKED = T(5_000_000); // 50 lakh free for the team at launch
+const LOCKED = T(500_000_000) - UNLOCKED; // 49.5 crore in the time-lock
+
+async function deploy(unlocked = UNLOCKED) {
   const [deployer, team, liquidity, burnPool, stranger] = await ethers.getSigners();
   const start = (await time.latest()) + 60;
   const vesting = await ethers.deployContract("TeamVesting", [team.address, start, 24 * MONTH, 6 * MONTH]);
   const token = await ethers.deployContract("ReviewBoosterToken", [
     await vesting.getAddress(),
+    team.address,
+    unlocked,
     liquidity.address,
     burnPool.address,
   ]);
@@ -26,10 +31,12 @@ describe("ReviewBoosterToken", () => {
     expect(await token.decimals()).to.equal(18n);
   });
 
-  it("creates exactly 100 crore tokens split 50 / 30 / 20", async () => {
-    const { token, vesting, liquidity, burnPool, deployer } = await deploy();
+  it("creates exactly 100 crore tokens split 50 / 30 / 20 (team: 50 lakh free + 49.5 crore locked)", async () => {
+    const { token, vesting, team, liquidity, burnPool, deployer } = await deploy();
     expect(await token.totalSupply()).to.equal(SUPPLY);
-    expect(await token.balanceOf(await vesting.getAddress())).to.equal(T(500_000_000));
+    expect(await token.balanceOf(team.address)).to.equal(UNLOCKED);
+    expect(await token.balanceOf(await vesting.getAddress())).to.equal(LOCKED);
+    expect(await token.teamUnlockedAtLaunch()).to.equal(UNLOCKED);
     expect(await token.balanceOf(liquidity.address)).to.equal(T(300_000_000));
     expect(await token.balanceOf(burnPool.address)).to.equal(T(200_000_000));
     expect(await token.balanceOf(deployer.address)).to.equal(0n); // the deployer keeps nothing
@@ -43,12 +50,26 @@ describe("ReviewBoosterToken", () => {
     expect(fns).to.not.include("pause");
   });
 
-  it("refuses a zero address for any of the three wallets", async () => {
-    const [, a, b] = await ethers.getSigners();
+  it("refuses a zero address for any wallet", async () => {
+    const [, a, b, c] = await ethers.getSigners();
     const Z = ethers.ZeroAddress;
-    await expect(ethers.deployContract("ReviewBoosterToken", [Z, a.address, b.address])).to.be.revertedWith("RBT: team vesting is zero");
-    await expect(ethers.deployContract("ReviewBoosterToken", [a.address, Z, b.address])).to.be.revertedWith("RBT: liquidity wallet is zero");
-    await expect(ethers.deployContract("ReviewBoosterToken", [a.address, b.address, Z])).to.be.revertedWith("RBT: burn pool is zero");
+    await expect(ethers.deployContract("ReviewBoosterToken", [Z, a.address, UNLOCKED, b.address, c.address])).to.be.revertedWith("RBT: team vesting is zero");
+    await expect(ethers.deployContract("ReviewBoosterToken", [a.address, a.address, UNLOCKED, Z, c.address])).to.be.revertedWith("RBT: liquidity wallet is zero");
+    await expect(ethers.deployContract("ReviewBoosterToken", [a.address, a.address, UNLOCKED, b.address, Z])).to.be.revertedWith("RBT: burn pool is zero");
+    await expect(ethers.deployContract("ReviewBoosterToken", [a.address, Z, UNLOCKED, b.address, c.address])).to.be.revertedWith("RBT: team wallet is zero");
+  });
+
+  it("can't unlock more than the team's 50%", async () => {
+    const [, a, b, c, d] = await ethers.getSigners();
+    await expect(ethers.deployContract("ReviewBoosterToken", [a.address, b.address, T(500_000_001), c.address, d.address])).to.be.revertedWith(
+      "RBT: unlocked part is more than the team share"
+    );
+  });
+
+  it("with 0 unlocked, the whole 50% is locked", async () => {
+    const { token, vesting, team } = await deploy(0n);
+    expect(await token.balanceOf(team.address)).to.equal(0n);
+    expect(await token.balanceOf(await vesting.getAddress())).to.equal(T(500_000_000));
   });
 
   it("burn pool burns its own tokens: supply goes down for good", async () => {
@@ -79,23 +100,29 @@ describe("TeamVesting (the team's 50%)", () => {
     await time.increaseTo(start + 6 * MONTH - 10);
     expect(await vesting["releasable(address)"](await token.getAddress())).to.equal(0n);
     await vesting["release(address)"](await token.getAddress());
-    expect(await token.balanceOf(team.address)).to.equal(0n);
+    expect(await token.balanceOf(team.address)).to.equal(UNLOCKED); // only the 50 lakh free at launch
+  });
+
+  it("at the cliff, 6/24 of the locked part unlocks at once", async () => {
+    const { token, vesting, start } = await deploy();
+    await time.increaseTo(start + 6 * MONTH);
+    expect(await vesting["releasable(address)"](await token.getAddress())).to.be.closeTo((LOCKED * 6n) / 24n, T(10));
   });
 
   it("after the cliff, releases in a straight line (half at 12 of 24 months)", async () => {
     const { token, vesting, start, team } = await deploy();
     await time.increaseTo(start + 12 * MONTH);
     await vesting["release(address)"](await token.getAddress());
-    const got = await token.balanceOf(team.address);
-    // 12/24 of 50 crore = 25 crore (allow one block of drift)
-    expect(got).to.be.closeTo(T(250_000_000), T(10));
+    const got = (await token.balanceOf(team.address)) - UNLOCKED;
+    // 12/24 of 49.5 crore = 24.75 crore (allow one block of drift)
+    expect(got).to.be.closeTo(LOCKED / 2n, T(10));
   });
 
   it("everything is released after 24 months, only to the team wallet", async () => {
     const { token, vesting, start, team, stranger } = await deploy();
     await time.increaseTo(start + 24 * MONTH + 1);
     await vesting.connect(stranger)["release(address)"](await token.getAddress()); // anyone may trigger it...
-    expect(await token.balanceOf(team.address)).to.equal(T(500_000_000)); // ...but it only goes to the team
+    expect(await token.balanceOf(team.address)).to.equal(T(500_000_000)); // ...but it only goes to the team (50 lakh + 49.5 crore)
     expect(await token.balanceOf(stranger.address)).to.equal(0n);
     expect(await token.balanceOf(await vesting.getAddress())).to.equal(0n);
   });

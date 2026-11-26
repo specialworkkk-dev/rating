@@ -139,10 +139,16 @@ export default async function TokenPage() {
           {chain.vesting && (
             <section className={`${card} space-y-3`}>
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <h2 className="font-semibold">Team 50% (time-locked)</h2>
+                <h2 className="font-semibold">Team 50%</h2>
+                <span className="text-muted">· lock</span>
                 <Short c={c} a={c.vesting} />
               </div>
-              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Figure
+                  label="Team wallet (free)"
+                  value={tok(chain.vesting.teamFree)}
+                  hint={chain.vesting.unlockedAtLaunch != null ? `${tok(chain.vesting.unlockedAtLaunch)} free at launch + released` : null}
+                />
                 <Figure label="Still locked" value={tok(chain.vesting.locked)} />
                 <Figure label="Released so far" value={tok(chain.vesting.released)} />
                 <Figure label="Can be released now" value={tok(chain.vesting.releasable)} />
