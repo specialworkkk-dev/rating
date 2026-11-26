@@ -7,6 +7,7 @@ import CopyButton from "@/components/CopyButton";
 import DeleteShopPanel from "@/components/DeleteShopPanel";
 import OwnerForm from "@/components/OwnerForm";
 import QrPoster from "@/components/QrPoster";
+import ShopContactCard from "@/components/ShopContactCard";
 import ShopForm from "@/components/ShopForm";
 import SpikeWarning from "@/components/SpikeWarning";
 import SuspiciousPanel from "@/components/SuspiciousPanel";
@@ -45,7 +46,7 @@ export default async function AdminShopPage({ params, searchParams }) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <Link href="/app/admin" className="text-sm text-stone-600">
+      <Link href="/app/admin" className="inline-block text-sm text-stone-600 hover:text-ink">
         ← All shops
       </Link>
       <h1 className="text-xl font-bold">{shop.name}</h1>
@@ -72,6 +73,7 @@ export default async function AdminShopPage({ params, searchParams }) {
       </section>
 
       <SpikeWarning spike={spike} variant="admin" />
+      <ShopContactCard shopId={shop.id} contact={shop.contact} />
       <SuspiciousPanel shopId={shop.id} bursts={bursts} />
       <BillingPanel shop={shop} />
       <QrPoster

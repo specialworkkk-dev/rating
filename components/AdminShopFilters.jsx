@@ -49,7 +49,8 @@ export default function AdminShopFilters({ counts }) {
 
   return (
     <div className={`flex flex-wrap items-center gap-2 transition-opacity ${pending ? "opacity-60" : ""}`}>
-      <div className="flex flex-wrap rounded-xl bg-stone-200/60 p-1 text-sm" role="tablist" aria-label="Status">
+      {/* One row on phones too: the tabs share the width instead of wrapping. */}
+      <div className="flex w-full rounded-xl bg-stone-200/60 p-1 text-sm sm:w-auto" role="tablist" aria-label="Status">
         {STATUSES.map((s) => (
           <button
             key={s.key}
@@ -57,10 +58,12 @@ export default function AdminShopFilters({ counts }) {
             role="tab"
             aria-selected={status === s.key}
             onClick={() => push({ status: s.key })}
-            className={`rounded-lg px-3 py-1.5 ${status === s.key ? "bg-white font-medium shadow-sm" : "text-stone-600 hover:text-ink"}`}
+            className={`flex flex-1 items-center justify-center rounded-lg px-1.5 py-1.5 whitespace-nowrap sm:flex-none sm:px-3 ${
+              status === s.key ? "bg-white font-medium shadow-sm" : "text-stone-600 hover:text-ink"
+            }`}
           >
             {s.label}
-            <span className={`ml-1.5 text-xs tabular-nums ${s.key === "due" && counts.due ? "font-semibold text-red-600" : "text-muted"}`}>
+            <span className={`ml-1 text-xs tabular-nums sm:ml-1.5 ${s.key === "due" && counts.due ? "font-semibold text-red-600" : "text-muted"}`}>
               {counts[s.key]}
             </span>
           </button>
@@ -76,17 +79,17 @@ export default function AdminShopFilters({ counts }) {
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search shops"
+          placeholder="Search name, email or phone"
           className="w-full rounded-xl border border-stone-300 bg-white py-2 pr-3 pl-9 text-sm outline-none focus:border-stone-900 focus:ring-4 focus:ring-stone-900/5"
         />
       </label>
 
-      <label className="flex items-center gap-2 text-sm text-muted">
+      <label className="flex w-full items-center gap-2 text-sm text-muted sm:w-auto">
         Sort
         <select
           value={sort}
           onChange={(e) => push({ sort: e.target.value })}
-          className="rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-stone-900"
+          className="min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-stone-900 sm:flex-none"
         >
           {SORTS.map((s) => (
             <option key={s.key} value={s.key}>

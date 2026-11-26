@@ -28,7 +28,7 @@ export default function ShopForm({ shop }) {
     googlePlaceId: shop?.googlePlaceId || "",
     logoUrl: shop?.logoUrl || "",
     alertEmail: shop?.alertEmail || "",
-    ...(shop ? {} : { monthlyPrice: "499" }),
+    ...(shop ? {} : { monthlyPrice: "499", contactName: "", contactPhone: "" }),
   });
   const [slugTouched, setSlugTouched] = useState(editing);
   const [busy, setBusy] = useState(false);
@@ -174,6 +174,17 @@ export default function ShopForm({ shop }) {
             <span className="pr-3 text-sm text-muted">/mo</span>
           </span>
         </Field>
+      )}
+
+      {!editing && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Owner’s name (optional)">
+            <input value={f.contactName} onChange={set("contactName")} maxLength={80} placeholder="e.g. Ramesh Sharma" autoComplete="off" className={input} />
+          </Field>
+          <Field label="Owner’s mobile (optional)" hint="So you can call them. Only you see it.">
+            <input value={f.contactPhone} onChange={set("contactPhone")} type="tel" inputMode="tel" maxLength={20} placeholder="98765 43210" autoComplete="off" className={input} />
+          </Field>
+        </div>
       )}
 
       <Field label="Alert email" hint="Where bad-rating alerts go. Defaults to the owner’s login email.">

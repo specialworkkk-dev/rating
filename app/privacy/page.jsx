@@ -168,7 +168,8 @@ const sections = [
     body: (
       <>
         <p>
-          For shop owners we store your name, email address, your shop’s details (name, logo, Google listing ID, plan and payments),
+          For shop owners we store your name, email address, a contact phone number if you give us one (seen only by the{" "}
+          {P} team, to call you about your account), your shop’s details (name, logo, Google listing ID, plan and payments),
           and your password in a scrambled form that nobody can read, not even us. A login cookie keeps you signed in.
         </p>
         <p>

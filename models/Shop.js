@@ -15,6 +15,11 @@ const ShopSchema = new mongoose.Schema(
     googlePlaceId: { type: String, trim: true },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     alertEmail: { type: String, lowercase: true, trim: true },
+    // Who the admin calls about this shop (seen only by the admin).
+    contactName: { type: String, trim: true },
+    contactPhone: { type: String, trim: true },
+    contactPhone2: { type: String, trim: true },
+    contactNotes: { type: String, trim: true },
     status: { type: String, enum: ["trial", "active", "paused"], default: "trial" },
     trialEndsAt: Date,
     paidUntil: Date,

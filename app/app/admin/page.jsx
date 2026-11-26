@@ -6,6 +6,7 @@ import { btnPrimary, card, fmtDate } from "@/components/ui";
 import { requirePageRole } from "@/lib/session";
 import { fmtNum } from "@/lib/format";
 import { formatINR } from "@/lib/pricing";
+import { phoneDigits, telHref } from "@/lib/phone";
 import { isShopActive } from "@/lib/shop";
 import { adminShop } from "@/lib/shopInput";
 import { getSpikesByShop } from "@/lib/spike";
@@ -82,7 +83,12 @@ export default async function AdminHome({ searchParams }) {
 
   const filtered = shops
     .filter((s) => status === "all" || s.category === status)
-    .filter((s) => !q || [s.name, s.slug, s.owner?.email, s.owner?.name].some((v) => v?.toLowerCase().includes(q)))
+    .filter(
+      (s) =>
+        !q ||
+        [s.name, s.slug, s.owner?.email, s.owner?.name, s.contact.name].some((v) => v?.toLowerCase().includes(q)) ||
+        (phoneDigits(q).length >= 4 && [s.contact.phone, s.contact.phone2].some((v) => phoneDigits(v).includes(phoneDigits(q))))
+    )
     .sort(SORTERS[sort]);
   const pageSize = PAGE_SIZES.includes(Number(sp.per)) ? Number(sp.per) : 10;
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -109,11 +115,15 @@ export default async function AdminHome({ searchParams }) {
       {serviceAlerts.length > 0 && (
         <Link
           href="/app/admin/services"
-          className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl bg-amber-50 p-4 text-sm text-amber-950 ring-1 ring-amber-200 hover:ring-amber-400"
+          className="block rounded-2xl bg-amber-50 p-4 text-sm text-amber-950 ring-1 ring-amber-200 hover:ring-amber-400 sm:flex sm:items-center sm:gap-3"
         >
-          <span className="font-semibold">⚠ Services need attention:</span>
-          <span className="min-w-0 flex-1">{serviceAlerts.join(" · ")}</span>
-          <span className="font-semibold underline">See Services →</span>
+          <span className="font-semibold">⚠ Services need attention</span>
+          <ul className="mt-1 list-disc pl-5 sm:mt-0 sm:flex-1">
+            {serviceAlerts.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+          <span className="mt-2 inline-block font-semibold underline sm:mt-0">See Services →</span>
         </Link>
       )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -147,67 +157,79 @@ export default async function AdminHome({ searchParams }) {
         </div>
       ) : (
         <ul className="space-y-3">
-          {pageShops.map((s) => (
-            <li key={s.id}>
-              <Link
-                href={`/app/admin/shops/${s.id}`}
-                className={`${card} flex flex-wrap items-center gap-x-5 gap-y-2 hover:ring-brand-500`}
-              >
-                <div className="min-w-0 flex-1 basis-56">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-semibold">{s.name}</span>
-                    <StatusBadge shop={s} />
-                    {s.owner && !s.termsAgreed && (
-                      <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-semibold text-stone-700">
-                        terms not agreed
-                      </span>
-                    )}
-                    {s.spike && (
-                      <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-white" title={`${s.spike.count} Google taps ${s.spike.label} vs about ${s.spike.normal}/day`}>
-                        ⚠ Google spike
-                      </span>
-                    )}
-                    {s.bursts > 0 && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                        ⚠ unusual activity
-                      </span>
-                    )}
-                    {s.deleteBy && (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800" title="Stopped long ago. If the shop has left, download a copy if needed and delete it.">
-                        🗑 delete by {fmtDate(s.deleteBy)}
-                      </span>
-                    )}
-                    {s.activity.unread > 0 && (
-                      <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
-                        {s.activity.unread} unread
-                      </span>
-                    )}
+          {pageShops.map((s) => {
+            const badges = [
+              s.owner && !s.termsAgreed && ["terms not agreed", "bg-stone-200 text-stone-700"],
+              !s.googlePlaceId && ["⚠ no Place ID", "bg-stone-200 text-stone-700"],
+              s.spike && ["⚠ Google spike", "bg-amber-500 text-white", `${s.spike.count} Google taps ${s.spike.label} vs about ${s.spike.normal}/day`],
+              s.bursts > 0 && ["⚠ unusual activity", "bg-amber-100 text-amber-900"],
+              s.deleteBy && [`🗑 delete by ${fmtDate(s.deleteBy)}`, "bg-red-100 text-red-800", "Stopped long ago. If the shop has left, download a copy if needed and delete it."],
+              s.activity.unread > 0 && [`${s.activity.unread} unread`, "bg-red-600 text-white"],
+            ].filter(Boolean);
+            return (
+              <li key={s.id} className={`${card} relative space-y-3 transition-shadow hover:ring-brand-500`}>
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      {/* The whole card opens the shop (the link stretches over it). */}
+                      <Link href={`/app/admin/shops/${s.id}`} className="font-semibold break-words after:absolute after:inset-0 after:rounded-2xl">
+                        {s.name}
+                      </Link>
+                      <StatusBadge shop={s} />
+                    </p>
                   </div>
-                  <p className="mt-0.5 truncate text-sm text-muted">
-                    /r/{s.slug} · {s.owner ? s.owner.email : "no owner login"}
-                    {!s.googlePlaceId && " · ⚠ no Place ID"}
+                  <p className="shrink-0 text-right text-xs text-muted">
+                    <span className="block text-sm font-semibold text-ink">{formatINR(s.monthlyPrice)}/mo</span>
+                    {s.status === "trial"
+                      ? `Trial until ${fmtDate(s.trialEndsAt)}`
+                      : s.status === "active"
+                        ? s.paidUntil
+                          ? `Paid until ${fmtDate(s.paidUntil)}`
+                          : "Paid, no end date"
+                        : "Paused"}
                   </p>
                 </div>
-                <dl className="flex gap-5 text-sm">
-                  <Metric label="Scans" value={s.activity.scans} />
-                  <Metric label="Ratings" value={s.activity.ratings} />
-                  <Metric label="→ Google" value={s.activity.googleClicks + (s.activity.directGoogle || 0)} />
-                </dl>
-                <p className="w-full text-xs text-muted sm:w-auto sm:text-right">
-                  <span className="font-semibold text-ink">{formatINR(s.monthlyPrice)}/mo</span>
-                  <br className="hidden sm:block" />
-                  <span className="sm:hidden"> · </span>
-                  {s.status === "trial"
-                    ? `Trial until ${fmtDate(s.trialEndsAt)}`
-                    : s.status === "active"
-                      ? s.paidUntil
-                        ? `Paid until ${fmtDate(s.paidUntil)}`
-                        : "Paid (no end date)"
-                      : "Paused"}
+                <p className="-mt-2 truncate text-sm text-muted">
+                  /r/{s.slug} · {s.owner ? s.owner.email : "no owner login"}
                 </p>
-              </Link>
-            </li>
-          ))}
+
+                {badges.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {badges.map(([text, cls, title]) => (
+                      <span key={text} title={title} className={`rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${cls}`}>
+                        {text}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-stone-100 pt-3">
+                  <dl className="flex gap-5 text-sm">
+                    <Metric label="Scans" value={s.activity.scans} />
+                    <Metric label="Ratings" value={s.activity.ratings} />
+                    <Metric label="→ Google" value={s.activity.googleClicks + (s.activity.directGoogle || 0)} />
+                  </dl>
+                  {s.contact.phone ? (
+                    <div className="relative z-10 ml-auto flex min-w-0 items-center gap-3">
+                      <span className="min-w-0 text-right text-xs leading-tight">
+                        {s.contact.name && <span className="block truncate font-medium">{s.contact.name}</span>}
+                        <span className="text-muted tabular-nums">{s.contact.phone}</span>
+                      </span>
+                      <a
+                        href={telHref(s.contact.phone)}
+                        aria-label={`Call ${s.contact.name || s.name}`}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+                      >
+                        📞 Call
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="ml-auto text-xs text-muted">No phone number</span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
       <Pagination
