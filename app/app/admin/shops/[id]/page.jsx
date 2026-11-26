@@ -16,7 +16,9 @@ import { requirePageRole } from "@/lib/session";
 import { adminShop } from "@/lib/shopInput";
 import { siteUrl } from "@/lib/site";
 import { getShopSpike } from "@/lib/spike";
-import { getShopStats, getSuspiciousBursts, sinceFor } from "@/lib/stats";
+import StatsCards from "@/components/StatsCards";
+import { fmtNum } from "@/lib/format";
+import { getDailySeries, getShopStats, getSuspiciousBursts, normalizeRange, sinceFor } from "@/lib/stats";
 import { getTotals } from "@/lib/totals";
 import Feedback from "@/models/Feedback";
 import Shop from "@/models/Shop";
@@ -24,23 +26,31 @@ import User from "@/models/User";
 
 export const metadata = { title: "Shop · Admin" };
 
+const RANGES = [
+  { key: "7", label: "7 days" },
+  { key: "30", label: "30 days" },
+  { key: "all", label: "All time" },
+];
+
 export default async function AdminShopPage({ params, searchParams }) {
   await requirePageRole("admin");
   const { id } = await params;
-  const { created } = await searchParams;
+  const { created, range: rangeParam } = await searchParams;
+  const range = normalizeRange(rangeParam);
   if (!mongoose.isValidObjectId(id)) notFound();
 
   const doc = await Shop.findById(id).lean();
   if (!doc) notFound();
   const owner = doc.ownerId ? await User.findById(doc.ownerId).select("name email").lean() : null;
   const shop = adminShop(doc, owner);
-  const [stats, base, bursts, spike, totals, feedbackCount] = await Promise.all([
-    getShopStats(doc._id, sinceFor("30")),
+  const [stats, base, bursts, spike, totals, feedbackCount, series] = await Promise.all([
+    getShopStats(doc._id, sinceFor(range)),
     siteUrl(),
     getSuspiciousBursts(doc._id),
     getShopSpike(doc._id),
     getTotals(doc._id),
     Feedback.countDocuments({ shopId: doc._id }),
+    getDailySeries(doc._id, range === "7" ? 7 : 30),
   ]);
   const ratingUrl = `${base}/r/${shop.slug}`;
 
@@ -65,11 +75,33 @@ export default async function AdminShopPage({ params, searchParams }) {
             Open
           </a>
         </div>
-        <p className="text-sm text-muted">
-          Last 30 days: {stats.scans} scans · {stats.ratings} ratings
-          {stats.average != null && ` · ${stats.average.toFixed(1)}★ avg`} · {stats.googleClicks} sent to
-          Google · {stats.unhappy} unhappy ({stats.unreadFeedback} unread feedback)
-        </p>
+      </section>
+
+      {/* The shop's figures: the same cards and star breakdown its owner sees. */}
+      <section id="figures" className="scroll-mt-20 space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Ratings &amp; figures</h2>
+            {stats.unreadFeedback > 0 && (
+              <p className="text-xs text-muted">{fmtNum(stats.unreadFeedback)} unread feedback for the owner</p>
+            )}
+          </div>
+          <div className="ml-auto flex rounded-xl bg-stone-200/60 p-1 text-sm">
+            {RANGES.map((r) => (
+              <Link
+                key={r.key}
+                href={`/app/admin/shops/${shop.id}?range=${r.key}#figures`}
+                scroll={false}
+                replace
+                aria-current={range === r.key ? "page" : undefined}
+                className={`rounded-lg px-3 py-1.5 whitespace-nowrap ${range === r.key ? "bg-white font-medium shadow-sm" : "text-stone-600 hover:text-ink"}`}
+              >
+                {r.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <StatsCards stats={stats} series={series} narrow />
       </section>
 
       <SpikeWarning spike={spike} variant="admin" />

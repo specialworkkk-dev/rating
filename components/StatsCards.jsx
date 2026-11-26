@@ -79,7 +79,8 @@ function StarMeter({ value }) {
   );
 }
 
-export default function StatsCards({ stats, series = [], chart = null }) {
+/** `narrow`: two cards per row at every width (for narrow columns, like the admin shop page). */
+export default function StatsCards({ stats, series = [], chart = null, narrow = false }) {
   // A flat line of zeros says nothing, so trends appear once there is activity.
   const trend = (key) => {
     // Google includes the direct "Review on Google" taps from the first screen.
@@ -92,7 +93,7 @@ export default function StatsCards({ stats, series = [], chart = null }) {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className={`grid grid-cols-2 gap-3 ${narrow ? "" : "lg:grid-cols-4"}`}>
         <Stat icon="scan" tone="bg-sky-50 text-sky-600" label="Scans" hint="QR / NFC opens" trend={trend("scans")} trendLabel="Scans per day" long={isLong(stats.scans)}>
           <CountUp value={stats.scans} />
         </Stat>
