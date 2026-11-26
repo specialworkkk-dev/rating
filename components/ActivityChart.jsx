@@ -4,6 +4,7 @@ import { useState } from "react";
 import { fmtNum } from "@/lib/format";
 import { ChartEmptyIllustration } from "./illustrations";
 import { card } from "./ui";
+import { MoodLabel } from "./Mood";
 
 // Validated pair (dataviz validator: CVD ΔE 21.6, all checks pass on white).
 const HAPPY = "#2a78d6";
@@ -62,11 +63,11 @@ export default function ActivityChart({ series, title, unit = "day", heading, sh
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-stone-600" aria-label="Legend">
           <span className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-sm" style={{ backgroundColor: HAPPY }} /> Happy (4–5★)
+            <span className="size-2.5 rounded-sm" style={{ backgroundColor: HAPPY }} /> <MoodLabel kind="happy">Happy (4–5★)</MoodLabel>
             <span className="font-semibold text-ink tabular-nums">{fmtNum(totals.happy)}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-2.5 rounded-sm" style={{ backgroundColor: UNHAPPY }} /> Unhappy (1–3★)
+            <span className="size-2.5 rounded-sm" style={{ backgroundColor: UNHAPPY }} /> <MoodLabel kind="unhappy">Unhappy (1–3★)</MoodLabel>
             <span className="font-semibold text-ink tabular-nums">{fmtNum(totals.unhappy)}</span>
           </span>
         </div>
@@ -165,11 +166,11 @@ export default function ActivityChart({ series, title, unit = "day", heading, sh
               >
                 <p className="font-semibold">{nameOf(active)}</p>
                 <p className="mt-1.5 flex items-center gap-1.5">
-                  <span className="size-2 rounded-sm" style={{ backgroundColor: HAPPY }} /> Happy
+                  <span className="size-2 rounded-sm" style={{ backgroundColor: HAPPY }} /> <MoodLabel kind="happy" />
                   <span className="ml-auto tabular-nums">{fmtNum(active.happy)}</span>
                 </p>
                 <p className="mt-0.5 flex items-center gap-1.5">
-                  <span className="size-2 rounded-sm" style={{ backgroundColor: UNHAPPY }} /> Unhappy
+                  <span className="size-2 rounded-sm" style={{ backgroundColor: UNHAPPY }} /> <MoodLabel kind="unhappy" />
                   <span className="ml-auto tabular-nums">{fmtNum(active.unhappy)}</span>
                 </p>
                 <p className="mt-1.5 flex border-t border-white/15 pt-1.5 text-stone-300">

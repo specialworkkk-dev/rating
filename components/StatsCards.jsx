@@ -3,6 +3,7 @@ import CountUp from "./CountUp";
 import Sparkline from "./Sparkline";
 import { fmtNum, fmtShare } from "@/lib/format";
 import { card } from "./ui";
+import { MoodLabel } from "./Mood";
 
 // Diverging scale (validated): blue for happy, neutral grey midpoint, red for
 // unhappy. Readable with colour blindness, unlike green-to-red.
@@ -112,7 +113,16 @@ export default function StatsCards({ stats, series = [], chart = null, narrow = 
           icon="avg"
           tone="bg-emerald-50 text-emerald-600"
           label="Average"
-          hint={stats.ratings ? `${fmtNum(happy)} happy · ${fmtNum(stats.unhappy)} unhappy` : "No ratings yet"}
+          hint={
+            stats.ratings ? (
+              <span className="flex flex-wrap gap-x-3 gap-y-0.5">
+                <MoodLabel kind="happy">{fmtNum(happy)} happy</MoodLabel>
+                <MoodLabel kind="unhappy">{fmtNum(stats.unhappy)} unhappy</MoodLabel>
+              </span>
+            ) : (
+              "No ratings yet"
+            )
+          }
         >
           {stats.average == null ? (
             <span className="text-stone-300">—</span>

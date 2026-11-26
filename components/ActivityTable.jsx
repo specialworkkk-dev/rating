@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fmtNum } from "@/lib/format";
 import Pagination from "./Pagination";
+import { GoogleLabel, MoodLabel } from "./Mood";
 
 const PERIODS = [
   { key: "1m", label: "1 month" },
@@ -197,8 +198,10 @@ export default function ActivityTable() {
           <p className="text-sm">
             <span className="font-semibold">{periodName} total</span>
             <span className="text-muted"> ({rangeText})</span>
-            <span className="font-semibold">:</span> {fmtNum(data.totals.scans)} scans · {fmtNum(data.totals.happy)} happy ·{" "}
-            {fmtNum(data.totals.unhappy)} unhappy · {fmtNum(data.totals.google + (data.totals.direct || 0))} to Google
+            <span className="font-semibold">:</span> {fmtNum(data.totals.scans)} scans ·{" "}
+            <MoodLabel kind="happy">{fmtNum(data.totals.happy)} happy</MoodLabel> ·{" "}
+            <MoodLabel kind="unhappy">{fmtNum(data.totals.unhappy)} unhappy</MoodLabel> ·{" "}
+            <GoogleLabel>{fmtNum(data.totals.google + (data.totals.direct || 0))} to Google</GoogleLabel>
             {data.totals.direct > 0 && <span className="text-muted"> (incl. {fmtNum(data.totals.direct)} direct)</span>}
           </p>
 
@@ -214,11 +217,14 @@ export default function ActivityTable() {
                   <tr>
                     <th className="px-2 py-2.5 sm:px-4 font-medium">{group === "month" ? "Month" : "Day"}</th>
                     <th className="hidden px-2 py-2.5 text-right font-medium sm:table-cell sm:px-4">Scans</th>
-                    <th className="px-2 py-2.5 sm:px-4 text-right font-medium">Happy</th>
-                    <th className="px-2 py-2.5 sm:px-4 text-right font-medium">Unhappy</th>
                     <th className="px-2 py-2.5 sm:px-4 text-right font-medium">
-                      <span className="sm:hidden">Google</span>
-                      <span className="hidden sm:inline">To Google</span>
+                      <MoodLabel kind="happy" stacked />
+                    </th>
+                    <th className="px-2 py-2.5 sm:px-4 text-right font-medium">
+                      <MoodLabel kind="unhappy" stacked />
+                    </th>
+                    <th className="px-2 py-2.5 sm:px-4 text-right font-medium">
+                      <GoogleLabel stacked />
                     </th>
                     <th className="hidden px-2 py-2.5 text-right font-medium sm:table-cell sm:px-4" title="“Review on Google” taps on the first screen (included in To Google)">
                       of which direct

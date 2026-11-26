@@ -1,5 +1,6 @@
 import { fmtNum } from "@/lib/format";
 import { card } from "./ui";
+import { MoodLabel } from "./Mood";
 
 const dayFmt = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const monthFmt = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
@@ -40,7 +41,7 @@ export default function PeriodSummary({ series, unit = "day" }) {
         sub={avg == null ? "No ratings yet" : "out of 5"}
       />
       <Tile
-        label="Happy customers"
+        label={<MoodLabel kind="happy">Happy customers</MoodLabel>}
         value={happyPct == null ? "—" : `${happyPct}%`}
         accent={happyPct == null ? "text-stone-300" : ""}
         sub={happyPct == null ? "4–5★ ratings" : `${fmtNum(t.happy)} gave 4–5★`}
