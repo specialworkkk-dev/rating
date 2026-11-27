@@ -21,8 +21,14 @@ export async function POST(req) {
   }
   const shop = await Shop.findById(user.shopId).lean();
   if (!shop) return bad("Shop not found", 404);
-  const res = await sendOffer(shop, { text: t, endsAt });
-  if (res.error) return bad(res.error, res.limit ? 429 : 403);
+  let res;
+  try {
+    res = await sendOffer(shop, { text: t, endsAt });
+  } catch (err) {
+    console.error("[offers] send failed:", err?.message || err);
+    return Response.json({ error: "Couldn’t send the offer because of a server problem. It wasn’t counted; please try again." }, { status: 500 });
+  }
+  if (res.error) return bad(res.error, res.limit ? 429 : res.setup ? 503 : 403);
   const o = res.offer;
   return Response.json({ offer: { id: String(o._id), followers: o.followers, sentTo: o.sentTo, removed: o.removed } }, { status: 201 });
 }
