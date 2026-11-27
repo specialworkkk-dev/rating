@@ -212,8 +212,8 @@ export default function FollowOffers({ slug, shopName }) {
           {help === "dismissed" && <p>You closed the question without choosing. Tap <b>Follow for offers</b> again and choose <b>Allow</b>.</p>}
           {help === "hidden" && (
             <p>
-              Your browser hid the question. Tap the small <b>🔔 bell</b> (or <b>🔒</b>) at the left of the address bar and choose{" "}
-              <b>Allow</b>, then tap Follow again.
+              Your browser hid the question. Tap the small <b>🔔 bell</b> (or the two-sliders <b>⚙</b> icon) at the left of the web
+              address and choose <b>Allow</b>, then tap Follow again.
             </p>
           )}
           {help === "blocked" && (
@@ -221,12 +221,16 @@ export default function FollowOffers({ slug, shopName }) {
               <p className="font-semibold">Notifications are off for this site on your phone. To turn them on:</p>
               <ol className="mt-1 list-decimal space-y-0.5 pl-5">
                 <li>
-                  Tap the <b>🔒</b> (or ⓘ) at the left of the address bar → <b>Permissions</b> → <b>Notifications</b> → <b>Allow</b>.
+                  Tap the small icon at the <b>left of the web address</b> (two sliders <b>⚙</b>, or 🔒 / ⓘ). Scroll up a little if
+                  you can’t see the address.
                 </li>
-                <li>Come back here and tap Follow again.</li>
+                <li>
+                  <b>Permissions</b> (or Site settings) → <b>Notifications</b> → <b>Allow</b>, then tap Follow again.
+                </li>
               </ol>
               <p className="mt-1 text-xs">
-                Still not working? Check your phone: Settings → Apps → Chrome → Notifications → On.
+                Still blocked? In Chrome: ⋮ → Settings → Site settings → Notifications → turn on, and allow this site. Opened from
+                WhatsApp? Tap ⋮ → “Open in Chrome” first.
               </p>
             </>
           )}
