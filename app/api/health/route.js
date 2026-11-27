@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
+import { imageStore } from "@/lib/imageStore";
 import { vapidStatus } from "@/lib/offers";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,8 @@ export async function GET() {
     // Offers notification keys: "ok", "missing" or "invalid" (never the keys).
     const offers = vapidStatus();
     return Response.json(
-      { ok: true, db: "up", ms: Date.now() - t, offers: offers.status, ...(offers.reason ? { offersReason: offers.reason } : {}) },
+      // photos: where offer photos are stored ("r2", "cloudinary" or "off"), never the keys.
+      { ok: true, db: "up", ms: Date.now() - t, offers: offers.status, ...(offers.reason ? { offersReason: offers.reason } : {}), photos: imageStore() || "off" },
       { headers: { "Cache-Control": "no-store" } }
     );
   } catch {
