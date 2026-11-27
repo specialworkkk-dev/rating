@@ -1,3 +1,4 @@
+import RawKeepSelect from "@/components/RawKeepSelect";
 import ServicePlanEditor from "@/components/ServicePlanEditor";
 import UsageMeter, { LevelLabel } from "@/components/UsageMeter";
 import { btnPrimary, btnSecondary, card, fmtDate } from "@/components/ui";
@@ -292,6 +293,10 @@ function MongoCard({ m }) {
           ({pct(m.steadyPercent)} of the plan with the other projects). This plan has room for about{" "}
           <b className="text-ink">{approx(m.capacityPerDay)}</b> customers a day.
         </p>
+        <RawKeepSelect
+          months={m.rawKeep.months}
+          changed={m.rawKeep.at ? `${fmtFull(m.rawKeep.at)}${m.rawKeep.by ? ` by ${m.rawKeep.by}` : ""}` : null}
+        />
         <p className="mt-2 text-muted">
           Daily cleanup (about 3 AM):{" "}
           {m.lastCleanup ? (

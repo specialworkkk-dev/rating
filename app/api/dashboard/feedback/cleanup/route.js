@@ -2,7 +2,7 @@ import { bad, readJson } from "@/lib/http";
 import { requireApiRole } from "@/lib/session";
 import Feedback from "@/models/Feedback";
 
-const PRESETS = { "1m": { months: 1 }, "3m": { months: 3 }, "1y": { months: 12 } };
+const PRESETS = { "1m": { months: 1 }, "2m": { months: 2 }, "3m": { months: 3 }, "1y": { months: 12 } };
 
 /** Messages received before this date are "older than" the chosen period. */
 function cutoffFor(body) {
@@ -30,7 +30,7 @@ export async function POST(req) {
 
   const body = await readJson(req);
   const cutoff = cutoffFor(body);
-  if (!cutoff) return bad("Choose 1 month, 3 months, 1 year, or 1–10 years");
+  if (!cutoff) return bad("Choose 1 month, 2 months, 3 months, 1 year, or 1–10 years");
 
   const query = { shopId: user.shopId, createdAt: { $lt: cutoff } };
   if (body.confirm !== true) {

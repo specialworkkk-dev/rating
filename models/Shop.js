@@ -26,6 +26,11 @@ const ShopSchema = new mongoose.Schema(
     plan: { type: String, enum: ["basic", "premium"], default: "basic" },
     // What this shop pays per month, in rupees. Set per shop by the admin.
     monthlyPrice: { type: Number, default: 499, min: 0, max: 1_000_000 },
+    // Offers (premium): send offers to followers' phones. Its own price,
+    // added to monthlyPrice, and a monthly sending limit. Set by the admin.
+    offersEnabled: { type: Boolean, default: false },
+    offersPrice: { type: Number, default: 199, min: 0, max: 1_000_000 },
+    offersMonthlyLimit: { type: Number, default: 8, min: 1, max: 100 },
     // When the owner agreed to the fair-review rules (Google policy), and how:
     // in their dashboard ("owner") or in person when the admin set them up ("admin").
     rulesAcceptedAt: Date,
@@ -35,6 +40,9 @@ const ShopSchema = new mongoose.Schema(
     termsAcceptedAt: Date,
     // When the shop was last paused, for the "delete within 90 days" reminder.
     pausedAt: Date,
+    // The owner's answer to the "delete feedback older than 2 months?" pop-up:
+    // asked again 2 months after answering; "later" snoozes it for a week.
+    feedbackReminder: { answeredAt: Date, snoozeUntil: Date },
   },
   { timestamps: true }
 );

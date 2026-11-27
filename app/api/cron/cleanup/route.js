@@ -1,10 +1,12 @@
 import { timingSafeEqual } from "node:crypto";
 import { cleanupAll } from "@/lib/cleanup";
 import { connectDB } from "@/lib/db";
+import { getRawKeepMonths } from "@/lib/dataSettings";
 import { runDailyBurns } from "@/lib/token";
 
 // Runs once a day from Vercel Cron (see vercel.json). Deletes raw records
-// older than RAW_KEEP_MONTHS (default 3); the owner's numbers do not change.
+// older than the admin's setting (2 or 3 months, Admin → Services); the
+// owner's numbers do not change.
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
@@ -19,7 +21,7 @@ function authorized(req) {
 export async function GET(req) {
   if (!authorized(req)) return Response.json({ error: "Unauthorized" }, { status: 401 });
   await connectDB();
-  const result = await cleanupAll({ budgetMs: 35_000 });
+  const result = await cleanupAll({ months: await getRawKeepMonths(), budgetMs: 35_000 });
   console.log("[cleanup]", JSON.stringify(result));
   // Then the RBT burn for the days that just ended (does nothing until set up).
   let tokenBurn;

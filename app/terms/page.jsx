@@ -146,6 +146,34 @@ const buildSections = (TOKEN_TERMS) => [
     ),
   },
   {
+    id: "offers",
+    title: "Offers (premium feature)",
+    body: (
+      <>
+        <p>
+          If Offers is switched on for your shop, customers can choose to follow your shop and you can send them short offers. It has
+          its own monthly price, agreed with you and shown with your plan, and a monthly limit on how many offers you can send.
+        </p>
+        <ul>
+          <li>
+            Offers must be honest and lawful, and open to all your followers. <b>Never</b> offer discounts, gifts or anything else in
+            exchange for a rating or a Google review.
+          </li>
+          <li>Only send offers from your own shop. No unrelated adverts, and no offensive or misleading content.</li>
+          <li>
+            Customers can stop at any time. If someone asks you to stop on WhatsApp, remove their number the same day, and use the
+            WhatsApp list only to send your own offers.
+          </li>
+          <li>
+            Deleting an offer removes it and its numbers permanently, but notifications already delivered stay on customers’ phones,
+            and the offer still counts towards that month’s limit.
+          </li>
+          <li>If your plan is paused or Offers is switched off, sending stops; your followers are kept until it is back on.</li>
+        </ul>
+      </>
+    ),
+  },
+  {
     id: "use",
     title: "Acceptable use",
     body: (

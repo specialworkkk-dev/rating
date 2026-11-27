@@ -4,6 +4,7 @@ import { BRAND } from "@/lib/brand";
 export const metadata = {
   title: BRAND.name,
   description: BRAND.tagline,
+  icons: { icon: "/icon.png" },
 };
 
 export const viewport = {

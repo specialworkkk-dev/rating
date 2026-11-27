@@ -2,6 +2,8 @@ import Link from "next/link";
 import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
 import FairRulesAgree from "@/components/FairRulesAgree";
+import FeedbackReminder from "@/components/FeedbackReminder";
+import { feedbackReminderCount } from "@/lib/feedbackReminder";
 import { hasAgreedToTerms } from "@/lib/legal";
 import { getTermsVersion } from "@/lib/tokenSettings";
 import GettingStarted from "@/components/GettingStarted";
@@ -15,7 +17,7 @@ import { POSTER_DESIGN } from "@/lib/posterDesign";
 import { fmtNum } from "@/lib/format";
 import { getOwnerContext } from "@/lib/ownerContext";
 import { getShopSpike } from "@/lib/spike";
-import { formatINR, shopPrice } from "@/lib/pricing";
+import { formatINR, totalPrice } from "@/lib/pricing";
 import { siteUrl } from "@/lib/site";
 import { getDailySeries, getShopStats, hasAnyRating, normalizeRange, sinceFor } from "@/lib/stats";
 
@@ -57,6 +59,8 @@ export default async function DashboardPage({ searchParams }) {
     getShopSpike(shop._id),
     getTermsVersion(),
   ]);
+  // Every 2 months: suggest deleting feedback older than 2 months (never automatic).
+  const oldFeedback = hasAgreedToTerms(shop, termsVersion) ? await feedbackReminderCount(shop) : 0;
   const ratingUrl = `${base}/r/${shop.slug}`;
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
   const daysLeft = until ? Math.max(0, Math.ceil((new Date(until) - Date.now()) / 86400000)) : null;
@@ -64,7 +68,7 @@ export default async function DashboardPage({ searchParams }) {
   const planText =
     shop.status === "trial"
       ? `Free trial${daysLeft != null ? ` · ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left` : ""}`
-      : `${formatINR(shopPrice(shop))}/month${until ? ` · paid until ${fmtDate(until)}` : ""}`;
+      : `${formatINR(totalPrice(shop))}/month${shop.offersEnabled ? " incl. Offers" : ""}${until ? ` · paid until ${fmtDate(until)}` : ""}`;
 
   const period = { 7: "In the last 7 days", 30: "In the last 30 days", all: "So far" }[range];
   const summary = stats.ratings
@@ -78,6 +82,7 @@ export default async function DashboardPage({ searchParams }) {
   return (
     <>
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6">
+        {oldFeedback > 0 && <FeedbackReminder count={oldFeedback} />}
         <SpikeWarning spike={spike} />
 
         <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} unread={stats.unreadFeedback} />

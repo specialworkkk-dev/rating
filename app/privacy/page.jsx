@@ -63,12 +63,39 @@ const sections = [
     ),
   },
   {
+    id: "offers",
+    title: "If you follow a shop for offers",
+    body: (
+      <>
+        <p>Some shops let you follow them for offers. This is separate from rating, and only happens if you choose it.</p>
+        <ul>
+          <li>
+            <b>Notifications:</b> when you tap “Follow for offers” and allow notifications, your browser gives us a delivery address
+            and keys for that shop’s offers. We store only that, the shop, the date and your device type (e.g. Android). No name,
+            number or location, and it is not linked to your rating.
+          </li>
+          <li>
+            <b>WhatsApp:</b> if you ask for offers on WhatsApp, we store your number (and name, if you add it) for that shop, with what
+            you agreed to. The shop sees it and sends you its offers from its own WhatsApp.
+          </li>
+          <li>
+            <b>To stop:</b> tap “Stop offers” on any offer, block notifications for this site, or ask the shop to remove your WhatsApp
+            number. We delete your follow at once.
+          </li>
+        </ul>
+      </>
+    ),
+  },
+  {
     id: "not",
     title: "What we do not collect",
     body: (
       <ul>
         <li>No location, contacts, photos or Google account details.</li>
-        <li>No advertising or tracking cookies, and no selling or renting of your information to anyone.</li>
+        <li>
+          No advertising or tracking cookies, and no selling or renting of your information to anyone. The only offers you can get
+          are from shops you chose to follow.
+        </li>
         <li>
           Reviews you write on Google are written on Google’s own website, not ours. Google’s privacy policy applies there. We only
           know that you tapped the button.
@@ -117,7 +144,7 @@ const sections = [
     body: (
       <ul>
         <li>
-          <b>Ratings, page opens and Google taps:</b> deleted automatically after about {LEGAL.rawKeepMonths} months. After that only
+          <b>Ratings, page opens and Google taps:</b> deleted automatically within {LEGAL.rawKeepMonths} months. After that only
           totals with no personal details remain.
         </li>
         <li>
@@ -126,6 +153,10 @@ const sections = [
         </li>
         <li>
           <b>The device cookie</b> expires about 400 days after your last rating. You can clear it at any time in your browser.
+        </li>
+        <li>
+          <b>Offer follows:</b> until you stop them, your browser stops accepting them, or the shop stops using {P}. WhatsApp offer
+          numbers: until you ask the shop to remove yours.
         </li>
         <li>Short-lived anti-spam records are deleted automatically within a day.</li>
       </ul>
@@ -193,6 +224,9 @@ const sections = [
         <li>
           <b>Browser storage</b>: a copy of the device code, and small preferences such as hiding the “install app” banner.
         </li>
+        <li>
+          <b>Offers helper</b> (only if you follow a shop): a small background script that shows that shop’s offer notifications.
+        </li>
       </ul>
     ),
   },
@@ -227,7 +261,7 @@ export default function PrivacyPage() {
       summary={[
         "No account needed to rate. Your name and phone number are always optional.",
         "Your feedback goes only to that shop. We never sell your information or show ads.",
-        `Ratings and visit records are deleted after about ${LEGAL.rawKeepMonths} months.`,
+        `Ratings and visit records are deleted within ${LEGAL.rawKeepMonths} months.`,
         "Your data is stored in India, and you can ask us to see or delete it at any time.",
       ]}
       sections={sections}

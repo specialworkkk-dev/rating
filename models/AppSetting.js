@@ -10,6 +10,10 @@ const AppSettingSchema = new mongoose.Schema(
     ownersTold: Switch, // token section in the Terms; owners agree again
     legalOk: Switch, // lawyer and CA approved: real network allowed
     burnsPaused: Switch, // stop the daily burn
+    // _id "data": how many months of raw records (each rating, scan, Google tap) to keep.
+    rawKeepMonths: Number,
+    rawKeepChangedAt: Date,
+    rawKeepChangedBy: String,
     history: [{ _id: false, key: String, on: Boolean, at: Date, by: String }],
   },
   { versionKey: false }

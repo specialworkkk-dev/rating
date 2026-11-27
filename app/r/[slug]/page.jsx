@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
+import FollowOffers from "@/components/FollowOffers";
 import RatingFlow from "@/components/RatingFlow";
 import ShopHeader from "@/components/ShopHeader";
 import { BRAND } from "@/lib/brand";
+import { INLINE_ICON } from "@/lib/inlineIcon";
 import { getPublicShop, SHOP_CACHE_SECONDS } from "@/lib/shopCache";
 import Unavailable from "./Unavailable";
 
@@ -22,6 +24,12 @@ export async function generateMetadata({ params }) {
   return {
     title: shop ? `Rate ${shop.name}` : "Not found",
     robots: { index: false, follow: false },
+    // Icon inside the page: no separate request on the busiest page.
+    icons: { icon: INLINE_ICON },
+    // Shops with Offers: iPhone needs a home-screen app to show notifications.
+    ...(shop?.offers
+      ? { manifest: `/r/${shop.slug}/manifest.webmanifest`, appleWebApp: { capable: true, title: shop.name, statusBarStyle: "default" } }
+      : {}),
   };
 }
 
@@ -34,6 +42,8 @@ export default async function RatePage({ params }) {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-10 pb-8">
       <ShopHeader name={shop.name} logoUrl={shop.logoUrl} />
       {shop.active ? <RatingFlow shop={shop} /> : <Unavailable shopName={shop.name} />}
+      {/* Separate from rating on purpose: no stars, reviews or Google here. */}
+      {shop.offers && <FollowOffers slug={shop.slug} shopName={shop.name} />}
       <p className="mt-auto pt-10 text-center text-xs text-stone-400">
         Powered by {BRAND.name} ·{" "}
         <a href="/privacy" className="underline">

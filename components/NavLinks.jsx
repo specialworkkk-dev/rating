@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 /**
  * Header navigation. `variant="bar"` is the inline version (tablet/desktop);
  * `variant="tabs"` is the full-width second row on phones.
- * Each link: { href, label, exact?, badge?, activeFor? }. `activeFor` lists the
+ * Each link: { href, label, short?, exact?, badge?, activeFor? }; `short` is used in the phone tabs. `activeFor` lists the
  * paths (and their sub-pages) where the link counts as the current one.
  */
 export default function NavLinks({ links, variant = "bar" }) {
@@ -36,7 +36,7 @@ export default function NavLinks({ links, variant = "bar" }) {
                   }`
             }
           >
-            {l.label}
+            {tabs ? l.short || l.label : l.label}
             {l.badge > 0 && (
               <span className="rounded-full bg-red-600 px-1.5 text-[11px] leading-4.5 font-bold text-white tabular-nums">
                 {l.badge > 99 ? "99+" : l.badge}

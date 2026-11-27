@@ -39,7 +39,7 @@ function category(s) {
 const SORTERS = {
   new: (a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""),
   name: (a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
-  price: (a, b) => b.monthlyPrice - a.monthlyPrice,
+  price: (a, b) => b.totalPrice - a.totalPrice,
   activity: (a, b) => b.activity.ratings - a.activity.ratings,
 };
 
@@ -73,7 +73,8 @@ export default async function AdminHome({ searchParams }) {
   const trials = shops.filter((s) => s.status === "trial" && s.live).length;
   const due = shops.filter((s) => s.status !== "paused" && !s.live).length;
   // Each shop pays its own agreed price.
-  const mrr = payingShops.reduce((sum, s) => sum + s.monthlyPrice, 0);
+  // Base price + Offers (premium) where it is switched on.
+  const mrr = payingShops.reduce((sum, s) => sum + s.totalPrice, 0);
 
   // Filters, sort and pagination (all shops are small enough to do in memory).
   const sp = await searchParams;
@@ -181,7 +182,8 @@ export default async function AdminHome({ searchParams }) {
                     </p>
                   </div>
                   <p className="shrink-0 text-right text-xs text-muted">
-                    <span className="block text-sm font-semibold text-ink">{formatINR(s.monthlyPrice)}/mo</span>
+                    <span className="block text-sm font-semibold text-ink">{formatINR(s.totalPrice)}/mo</span>
+                    {s.offersEnabled && <span className="block text-[11px]">incl. ⭐ Offers {formatINR(s.offersPrice)}</span>}
                     {s.status === "trial"
                       ? `Trial until ${fmtDate(s.trialEndsAt)}`
                       : s.status === "active"
