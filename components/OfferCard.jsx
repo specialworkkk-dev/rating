@@ -1,5 +1,3 @@
-import ShareOffer from "./ShareOffer";
-
 // The offer as customers see it after tapping a notification. Used by the
 // real offer page and by the owner's preview, so they can never differ.
 // On purpose: no stars, no review request, no Google button.
@@ -13,6 +11,7 @@ function endsLabel(endsAt, now = new Date()) {
   const days = Math.round((Date.parse(`${istDay.format(end)}T00:00:00Z`) - Date.parse(`${istDay.format(now)}T00:00:00Z`)) / 864e5);
   if (days <= 0) {
     const hours = Math.max(1, Math.ceil((end - now) / 3_600_000));
+    if (hours > 12) return { urgent: true, text: "⏰ Ends today!" };
     return { urgent: true, text: `⏰ Ends tonight! ${hours} hour${hours === 1 ? "" : "s"} left` };
   }
   if (days === 1) return { urgent: true, text: "⏰ Ends tomorrow!" };
@@ -22,7 +21,7 @@ function endsLabel(endsAt, now = new Date()) {
 
 const telHref = (p) => `tel:${String(p).replace(/[^\d+]/g, "")}`;
 
-export default function OfferCard({ shopName, mapsUrl, phone, text, endsAt, imageUrl, code, shareUrl, available = true }) {
+export default function OfferCard({ shopName, mapsUrl, phone, text, endsAt, imageUrl, code, available = true }) {
   const ends = available ? endsLabel(endsAt) : null;
   return (
     <section className="mt-6 overflow-hidden rounded-3xl bg-white text-center shadow-sm ring-1 ring-stone-200">
@@ -62,7 +61,6 @@ export default function OfferCard({ shopName, mapsUrl, phone, text, endsAt, imag
                   📞 Call shop
                 </a>
               )}
-              <ShareOffer shopName={shopName} text={text || ""} url={shareUrl} />
             </div>
           </div>
         </>
