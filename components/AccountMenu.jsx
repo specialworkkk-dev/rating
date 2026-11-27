@@ -83,7 +83,17 @@ export default function AccountMenu({ name, email, role }) {
               Privacy Policy
             </a>
           </div>
-          <form action={logout} className="border-t border-stone-100 p-1.5">
+          <form
+            action={logout}
+            onSubmit={() => {
+              // Forget saved app pages on this phone (public/sw.js).
+              try {
+                caches?.delete("rb-pages-v1");
+                navigator.serviceWorker?.controller?.postMessage({ type: "rb-clear" });
+              } catch {}
+            }}
+            className="border-t border-stone-100 p-1.5"
+          >
             <button
               type="submit"
               role="menuitem"

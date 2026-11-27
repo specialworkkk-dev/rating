@@ -23,11 +23,15 @@ function detect() {
   const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const standalone = window.matchMedia?.("(display-mode: standalone)").matches || navigator.standalone === true;
   const push = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  // In-app browsers (Instagram, Facebook, some WebViews) can't show notifications.
+  const inApp = /FBAN|FBAV|Instagram|Line\/|; wv\)/.test(ua);
   return {
     ios,
-    push,
+    push: push && !inApp,
+    inApp,
     device: ios ? "iPhone" : /Android/.test(ua) ? "Android" : "Computer",
     iosNeedsHomeScreen: ios && !standalone,
+    blocked: push && Notification.permission === "denied",
   };
 }
 
@@ -42,6 +46,7 @@ export default function FollowOffers({ slug, shopName }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [showWhatsApp, setShowWhatsApp] = useState(false);
+  const [help, setHelp] = useState(null); // "blocked" | "dismissed" | "hidden"
   const [waDone, setWaDone] = useState(false);
   const key = `rb_follow_${slug}`;
 
@@ -49,6 +54,7 @@ export default function FollowOffers({ slug, shopName }) {
     const d = detect();
     setEnv(d);
     setShowWhatsApp(d.iosNeedsHomeScreen || !d.push);
+    if (d.blocked) setHelp("blocked");
     try {
       if (localStorage.getItem(key) && d.push && Notification.permission === "granted") setFollowing(true);
     } catch {}
@@ -57,11 +63,14 @@ export default function FollowOffers({ slug, shopName }) {
   async function follow() {
     setBusy(true);
     setMsg("");
+    setHelp(null);
     try {
+      const asked = Date.now();
       const permission = await Notification.requestPermission();
+      if (permission === "denied") return setHelp("blocked");
       if (permission !== "granted") {
-        setMsg("Notifications are blocked. Allow them for this site in your browser settings, then try again.");
-        return;
+        // Answered "default" at once: Chrome hid the question (quiet prompt). Later: the customer closed it.
+        return setHelp(Date.now() - asked < 800 ? "hidden" : "dismissed");
       }
       const reg = await navigator.serviceWorker.register(SW, { scope: SCOPE });
       await navigator.serviceWorker.ready;
@@ -180,6 +189,11 @@ export default function FollowOffers({ slug, shopName }) {
             <button type="submit" disabled={busy} className="w-full rounded-2xl bg-[#1f8f4e] px-6 py-3.5 font-semibold text-white disabled:opacity-60">
               {busy ? "Saving…" : "Get offers on WhatsApp"}
             </button>
+            {env.inApp && (
+              <p className="text-center text-xs text-muted">
+                For notifications instead, open this page in <b>Chrome</b> (⋮ menu → “Open in Chrome”) and tap Follow.
+              </p>
+            )}
             {env.iosNeedsHomeScreen && (
               <p className="text-center text-xs text-muted">
                 Or get them as notifications: tap <b>Share</b> → <b>Add to Home Screen</b>, open it from your home screen, then tap Follow.
@@ -193,6 +207,34 @@ export default function FollowOffers({ slug, shopName }) {
           </form>
         ))}
 
+      {help && !following && (
+        <div className="mt-4 rounded-xl bg-amber-50 p-3 text-left text-sm text-amber-950 ring-1 ring-amber-200" role="alert">
+          {help === "dismissed" && <p>You closed the question without choosing. Tap <b>Follow for offers</b> again and choose <b>Allow</b>.</p>}
+          {help === "hidden" && (
+            <p>
+              Your browser hid the question. Tap the small <b>🔔 bell</b> (or <b>🔒</b>) at the left of the address bar and choose{" "}
+              <b>Allow</b>, then tap Follow again.
+            </p>
+          )}
+          {help === "blocked" && (
+            <>
+              <p className="font-semibold">Notifications are off for this site on your phone. To turn them on:</p>
+              <ol className="mt-1 list-decimal space-y-0.5 pl-5">
+                <li>
+                  Tap the <b>🔒</b> (or ⓘ) at the left of the address bar → <b>Permissions</b> → <b>Notifications</b> → <b>Allow</b>.
+                </li>
+                <li>Come back here and tap Follow again.</li>
+              </ol>
+              <p className="mt-1 text-xs">
+                Still not working? Check your phone: Settings → Apps → Chrome → Notifications → On.
+              </p>
+            </>
+          )}
+          <button type="button" onClick={() => setShowWhatsApp(true)} className="mt-2 font-semibold text-[#1f8f4e] underline">
+            Or get offers on WhatsApp instead
+          </button>
+        </div>
+      )}
       {msg && (
         <p className="mt-3 text-sm text-red-600" role="alert">
           {msg}

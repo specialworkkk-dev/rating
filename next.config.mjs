@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
+// A marker that changes with every deploy, so installed apps notice a new
+// version (see public/sw.js).
+const BUILD_ID = process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_DEPLOYMENT_ID || String(Date.now());
+
 const nextConfig = {
+  env: { NEXT_PUBLIC_BUILD_ID: BUILD_ID },
   experimental: {
     // Fewer, larger files for customers: most open one rating page from a QR
     // code and leave, so each extra request costs more than a bigger file.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { login } from "./actions";
 
 const field =
@@ -9,6 +9,14 @@ const field =
 export default function LoginForm() {
   const [state, action, pending] = useActionState(login, null);
   const [show, setShow] = useState(false);
+
+  // Forget any app pages saved on this phone (public/sw.js), so the next
+  // account never sees the previous one's screens.
+  useEffect(() => {
+    try {
+      caches?.delete("rb-pages-v1");
+    } catch {}
+  }, []);
 
   return (
     <form action={action} className="space-y-5">
