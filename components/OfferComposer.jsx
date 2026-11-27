@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { fmtNum } from "@/lib/format";
+import OfferCard from "./OfferCard";
+import ShopHeader from "./ShopHeader";
 import { btnPrimary, btnSecondary, card } from "./ui";
 
 // Emoji tabs for offers, grouped so owners find the right one fast.
@@ -22,11 +24,12 @@ const initials = (name) => {
 };
 
 /** Write an offer, see how the notification will look, and send it to all followers. */
-export default function OfferComposer({ shopName, followers, used, limit, disabled }) {
+export default function OfferComposer({ shopName, logoUrl, mapsUrl, followers, used, limit, disabled }) {
   const router = useRouter();
   const [text, setText] = useState("");
   const [endsOn, setEndsOn] = useState("");
   const [group, setGroup] = useState(0);
+  const [previewing, setPreviewing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null); // { type, text }
@@ -139,6 +142,45 @@ export default function OfferComposer({ shopName, followers, used, limit, disabl
 
       {msg && <p className={`text-sm ${msg.type === "error" ? "text-red-600" : "text-emerald-700"}`}>{msg.text}</p>}
 
+      {previewing && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Offer preview">
+          <p className="mt-2 text-sm font-semibold text-white">What customers see when they tap your offer</p>
+          {/* The notification itself */}
+          <div className="mt-3 flex w-full max-w-sm items-start gap-3 rounded-2xl bg-white/95 p-3 shadow-lg">
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-100 text-xs font-bold text-brand-700">{initials(shopName)}</span>
+            <span className="min-w-0 text-sm">
+              <span className="block font-semibold">{shopName}</span>
+              <span className="block break-words text-stone-700">{text || "Your offer appears here"}</span>
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-white/80">↓ after tapping it</p>
+          {/* The page, inside a phone frame */}
+          <div className="mt-2 w-full max-w-sm overflow-hidden rounded-[2rem] border-[6px] border-stone-800 bg-stone-50 shadow-2xl">
+            <div className="flex min-h-[28rem] flex-col px-5 pt-8 pb-6">
+              <ShopHeader name={shopName} logoUrl={logoUrl} />
+              <OfferCard shopName={shopName} mapsUrl={mapsUrl} text={text} endsAt={endsOn ? `${endsOn}T23:59:59+05:30` : null} />
+              <p className="mt-4 text-center text-sm text-stone-500 underline">Stop offers from {shopName}</p>
+            </div>
+          </div>
+          <div className="mt-4 flex w-full max-w-sm gap-2 pb-4">
+            <button type="button" onClick={() => setPreviewing(false)} className="flex-1 rounded-xl bg-white py-3 font-semibold text-ink">
+              ✏️ Edit
+            </button>
+            <button
+              type="button"
+              disabled={disabled || text.trim().length < 3 || left <= 0}
+              onClick={() => {
+                setPreviewing(false);
+                setConfirming(true);
+              }}
+              className="flex-1 rounded-xl bg-brand-500 py-3 font-semibold text-white disabled:opacity-50"
+            >
+              🔔 Send this offer
+            </button>
+          </div>
+        </div>
+      )}
+
       {confirming ? (
         <div className="space-y-3 rounded-xl bg-amber-50 p-3 text-sm ring-1 ring-amber-200">
           <p>
@@ -155,14 +197,19 @@ export default function OfferComposer({ shopName, followers, used, limit, disabl
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => setConfirming(true)}
-          disabled={disabled || text.trim().length < 3 || left <= 0}
-          className={`${btnPrimary} w-full py-3 sm:w-auto`}
-        >
-          🔔 Send offer
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button type="button" onClick={() => setPreviewing(true)} disabled={text.trim().length < 3} className={`${btnSecondary} w-full py-3 sm:w-auto`}>
+            👁 Preview page
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            disabled={disabled || text.trim().length < 3 || left <= 0}
+            className={`${btnPrimary} w-full py-3 sm:w-auto`}
+          >
+            🔔 Send offer
+          </button>
+        </div>
       )}
     </section>
   );

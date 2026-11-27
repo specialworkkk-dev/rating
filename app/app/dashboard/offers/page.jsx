@@ -7,6 +7,7 @@ import { fmtNum } from "@/lib/format";
 import { LEGAL } from "@/lib/legal";
 import { offersLimit, offersLive, offersUsedThisMonth, pushConfigured } from "@/lib/offers";
 import { getOwnerContext } from "@/lib/ownerContext";
+import { publicShop } from "@/lib/shop";
 import { DEFAULT_OFFERS_PRICE, formatINR } from "@/lib/pricing";
 import Follower from "@/models/Follower";
 import Offer from "@/models/Offer";
@@ -83,6 +84,7 @@ export default async function OffersPage() {
       text: o.text,
       sentLabel: sentFmt.format(o.sentAt),
       endsLabel: o.endsAt ? dayFmt.format(o.endsAt) : null,
+      url: `/r/${shop.slug}/offer/${o._id}`,
       followers: o.followers || 0,
       sentTo: o.sentTo || 0,
       removed: o.removed || 0,
@@ -123,7 +125,15 @@ export default async function OffersPage() {
         </p>
       </section>
 
-      <OfferComposer shopName={shop.name} followers={followers} used={used} limit={limit} disabled={!live} />
+      <OfferComposer
+        shopName={shop.name}
+        logoUrl={shop.logoUrl || null}
+        mapsUrl={publicShop(shop).mapsUrl}
+        followers={followers}
+        used={used}
+        limit={limit}
+        disabled={!live}
+      />
 
       <section className={card}>
         <h2 className="font-semibold">Sent offers</h2>

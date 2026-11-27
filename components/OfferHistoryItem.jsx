@@ -52,9 +52,14 @@ export default function OfferHistoryItem({ offer }) {
             </button>
           </span>
         ) : (
-          <button type="button" onClick={() => setAsking(true)} className="text-sm text-stone-500 hover:text-red-700">
-            🗑 Delete
-          </button>
+          <span className="flex items-center gap-4">
+            <a href={offer.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-brand-700 hover:underline">
+              👁 View
+            </a>
+            <button type="button" onClick={() => setAsking(true)} className="text-sm text-stone-500 hover:text-red-700">
+              🗑 Delete
+            </button>
+          </span>
         )}
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
