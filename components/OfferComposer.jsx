@@ -5,7 +5,16 @@ import { useState } from "react";
 import { fmtNum } from "@/lib/format";
 import { btnPrimary, btnSecondary, card } from "./ui";
 
-const EMOJIS = ["🎉", "🔥", "🎁", "⭐", "💥", "🪔", "🍬", "☕", "🍕", "🛍️", "💯", "⏰"];
+// Emoji tabs for offers, grouped so owners find the right one fast.
+const EMOJI_GROUPS = [
+  { label: "🎉 Celebrate", items: ["🎉", "🎊", "🥳", "✨", "🎁", "🎈", "🎀", "🏆", "🥇", "🎯", "🎶", "💐"] },
+  { label: "🍬 Food", items: ["🍬", "🍭", "🍫", "🍩", "🍰", "🧁", "🎂", "🍦", "🥛", "☕", "🍵", "🥤", "🍕", "🍔", "🍟", "🌮", "🍛", "🍜", "🍱", "🥗", "🍎", "🥭", "🍓", "🍉"] },
+  { label: "🔥 Deals", items: ["🔥", "💥", "⭐", "🌟", "💯", "🏷️", "💰", "💸", "🛍️", "🛒", "🆕", "🆓", "➕", "✅", "👉", "📣"] },
+  { label: "🪔 Festivals", items: ["🪔", "🎆", "🎇", "🌸", "🕉️", "🪷", "🎄", "🎅", "🌙", "⭐", "🇮🇳", "🪁", "🌈", "🥁", "🎑", "🧨"] },
+  { label: "⏰ Time", items: ["⏰", "⌛", "⏳", "📅", "🗓️", "☀️", "🌅", "🌙", "🕔", "🚀", "⚡", "🔔"] },
+  { label: "😍 Love", items: ["😍", "🤩", "😋", "🥰", "❤️", "💛", "💚", "👍", "🙏", "👌", "🤝", "😊"] },
+  { label: "🛍️ Shops", items: ["💇‍♀️", "💅", "💄", "👗", "👟", "👜", "💍", "📱", "💻", "📚", "✏️", "💊", "🦷", "🏋️", "🚗", "🐶"] },
+];
 const MAX = 200;
 const initials = (name) => {
   const w = String(name || "").trim().split(/\s+/);
@@ -17,6 +26,7 @@ export default function OfferComposer({ shopName, followers, used, limit, disabl
   const router = useRouter();
   const [text, setText] = useState("");
   const [endsOn, setEndsOn] = useState("");
+  const [group, setGroup] = useState(0);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null); // { type, text }
@@ -61,26 +71,44 @@ export default function OfferComposer({ shopName, followers, used, limit, disabl
           disabled={disabled}
         />
         <span className="mt-1 flex items-center justify-between text-xs text-muted">
-          <span className="flex flex-wrap gap-1">
-            {EMOJIS.map((e) => (
-              <button
-                key={e}
-                type="button"
-                disabled={disabled}
-                onClick={() => setText((t) => (t + e).slice(0, MAX))}
-                className="rounded-lg px-1.5 py-1 text-lg leading-none hover:bg-stone-100"
-                aria-label={`Add ${e}`}
-              >
-                {e}
-              </button>
-            ))}
-          </span>
+          <span>Tap an emoji to add it</span>
           <span className="shrink-0 tabular-nums">
             {text.length}/{MAX}
           </span>
         </span>
       </label>
 
+      {/* Emoji tabs */}
+      <div className="rounded-xl ring-1 ring-stone-200">
+        <div className="flex gap-1 overflow-x-auto border-b border-stone-100 p-1.5" role="tablist" aria-label="Emoji groups">
+          {EMOJI_GROUPS.map((g, i) => (
+            <button
+              key={g.label}
+              type="button"
+              role="tab"
+              aria-selected={group === i}
+              onClick={() => setGroup(i)}
+              className={`shrink-0 rounded-lg px-2.5 py-1 text-xs whitespace-nowrap ${group === i ? "bg-stone-900 font-semibold text-white" : "text-stone-600 hover:bg-stone-100"}`}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-8 gap-0.5 p-1.5 sm:grid-cols-12">
+          {EMOJI_GROUPS[group].items.map((e, i) => (
+            <button
+              key={`${e}-${i}`}
+              type="button"
+              disabled={disabled}
+              onClick={() => setText((t) => (t + e).slice(0, MAX))}
+              className="rounded-lg py-1.5 text-xl leading-none hover:bg-stone-100 disabled:opacity-40"
+              aria-label={`Add ${e}`}
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+      </div>
       <label className="block w-fit">
         <span className="text-sm font-medium">
           Valid till <span className="font-normal text-muted">(optional)</span>
