@@ -96,10 +96,21 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, phone, follo
     router.refresh();
   }
 
+  // Delete a photo that won't be used from storage straight away.
+  function discardPhoto(url) {
+    if (!url) return;
+    fetch("/api/dashboard/offers/image", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    }).catch(() => {});
+  }
+
   async function pickPhoto(e) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    const previous = imageUrl;
     setUploading(true);
     setMsg(null);
     try {
@@ -110,6 +121,7 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, phone, follo
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "Couldn’t upload the photo");
       setImageUrl(json.url);
+      discardPhoto(previous); // replaced
     } catch (err) {
       setMsg({ type: "error", text: err.message });
     } finally {
@@ -216,7 +228,14 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, phone, follo
           <div className="mt-2 flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={imageUrl} alt="" className="size-20 rounded-xl object-cover ring-1 ring-stone-200" />
-            <button type="button" onClick={() => setImageUrl(null)} className="text-sm text-stone-500 hover:text-red-700">
+            <button
+              type="button"
+              onClick={() => {
+                discardPhoto(imageUrl);
+                setImageUrl(null);
+              }}
+              className="text-sm text-stone-500 hover:text-red-700"
+            >
               Remove photo
             </button>
           </div>

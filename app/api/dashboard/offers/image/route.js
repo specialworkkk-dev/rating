@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { bad } from "@/lib/http";
-import { imageStore, putImage } from "@/lib/imageStore";
+import { deleteImage, imageStore, isShopOfferImage, putImage } from "@/lib/imageStore";
+import { readJson } from "@/lib/http";
+import Offer from "@/models/Offer";
 import { offersLive } from "@/lib/offers";
 import { HOUR, rateLimit, tooMany } from "@/lib/rateLimit";
 import { requireApiRole } from "@/lib/session";
@@ -34,4 +36,18 @@ export async function POST(req) {
     console.error("[offers] photo upload failed:", err?.message);
     return bad("Couldn’t upload the photo. Please try again.", 502);
   }
+}
+
+/**
+ * The owner removes a photo before sending (or picks another): delete it from
+ * storage at once. Photos of sent offers are kept until the offer is deleted.
+ */
+export async function DELETE(req) {
+  const { user, error } = await requireApiRole("owner");
+  if (error) return error;
+  const { url } = await readJson(req);
+  if (!isShopOfferImage(url, user.shopId)) return bad("Not one of your photos");
+  if (await Offer.exists({ shopId: user.shopId, imageUrl: url })) return Response.json({ ok: true, kept: "used by a sent offer" });
+  await deleteImage(url);
+  return Response.json({ ok: true });
 }

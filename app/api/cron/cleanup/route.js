@@ -3,6 +3,8 @@ import { cleanupAll } from "@/lib/cleanup";
 import { connectDB } from "@/lib/db";
 import { getRawKeepMonths } from "@/lib/dataSettings";
 import { runDailyBurns } from "@/lib/token";
+import { deleteUnusedOfferPhotos } from "@/lib/imageStore";
+import Offer from "@/models/Offer";
 
 // Runs once a day from Vercel Cron (see vercel.json). Deletes raw records
 // older than the admin's setting (2 or 3 months, Admin → Services); the
@@ -31,5 +33,14 @@ export async function GET(req) {
     tokenBurn = { status: "error", error: String(err?.message || err).slice(0, 300) };
   }
   console.log("[token-burn]", JSON.stringify(tokenBurn));
-  return Response.json({ ...result, tokenBurn });
+  // Offer photos uploaded but never sent (removed or abandoned), older than a day.
+  let photos;
+  try {
+    const used = await Offer.distinct("imageUrl", { imageUrl: { $exists: true } });
+    photos = await deleteUnusedOfferPhotos(new Set(used));
+  } catch (err) {
+    photos = { error: String(err?.message || err).slice(0, 200) };
+  }
+  console.log("[offer-photos]", JSON.stringify(photos));
+  return Response.json({ ...result, tokenBurn, photos });
 }
