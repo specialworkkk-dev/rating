@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { fmtNum } from "@/lib/format";
+import { OFFER_TEMPLATES, offerCodeWord } from "@/lib/offerTemplates";
 import OfferCard from "./OfferCard";
 import ShopHeader from "./ShopHeader";
 import { btnPrimary, btnSecondary, card } from "./ui";
@@ -24,9 +25,36 @@ const initials = (name) => {
 };
 
 /** Write an offer, see how the notification will look, and send it to all followers. */
-export default function OfferComposer({ shopName, logoUrl, mapsUrl, followers, used, limit, disabled }) {
+/** Shrink a phone photo in the browser (max 1280 px, JPEG) so it uploads fast even on mobile data. */
+async function shrinkPhoto(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("That file isn’t a photo we can read"));
+      i.src = url;
+    });
+    const scale = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    return await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+export default function OfferComposer({ shopName, logoUrl, mapsUrl, phone, followers, used, limit, disabled, initialText = "", canUploadPhoto = false }) {
   const router = useRouter();
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [withCode, setWithCode] = useState(true);
+  const [codeTyped, setCodeTyped] = useState(null); // null = follow the offer text
+  const digits = useRef(String(Math.floor(1000 + Math.random() * 9000)));
+  const code = codeTyped ?? `${offerCodeWord(text)}-${digits.current}`;
   const [endsOn, setEndsOn] = useState("");
   const [group, setGroup] = useState(0);
   const [previewing, setPreviewing] = useState(false);
@@ -42,7 +70,7 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, followers, u
     const res = await fetch("/api/dashboard/offers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, endsOn: endsOn || undefined }),
+      body: JSON.stringify({ text, endsOn: endsOn || undefined, imageUrl: imageUrl || undefined, code: withCode ? code : undefined }),
     }).catch(() => null);
     const json = await res?.json().catch(() => ({}));
     setBusy(false);
@@ -51,7 +79,31 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, followers, u
     setMsg({ type: "ok", text: `✓ Sent to ${fmtNum(json.offer.sentTo)} follower${json.offer.sentTo === 1 ? "" : "s"}.` });
     setText("");
     setEndsOn("");
+    setImageUrl(null);
+    setCodeTyped(null);
+    digits.current = String(Math.floor(1000 + Math.random() * 9000));
     router.refresh();
+  }
+
+  async function pickPhoto(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    setMsg(null);
+    try {
+      const small = await shrinkPhoto(file);
+      const body = new FormData();
+      body.append("file", new File([small], "offer.jpg", { type: "image/jpeg" }));
+      const res = await fetch("/api/dashboard/offers/image", { method: "POST", body });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Couldn’t upload the photo");
+      setImageUrl(json.url);
+    } catch (err) {
+      setMsg({ type: "error", text: err.message });
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -61,6 +113,24 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, followers, u
         <span className={`text-sm ${left > 0 ? "text-muted" : "font-semibold text-red-700"}`}>
           {used} of {limit} offers used this month
         </span>
+      </div>
+
+      {/* Ready-made offers: tap, then edit. */}
+      <div>
+        <p className="text-xs font-medium text-muted">Ready-made offers (tap one, then edit)</p>
+        <div className="mt-1 flex gap-1.5 overflow-x-auto pb-1">
+          {OFFER_TEMPLATES.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              disabled={disabled}
+              onClick={() => setText(t.text)}
+              className="shrink-0 rounded-full bg-stone-100 px-3 py-1.5 text-xs font-medium whitespace-nowrap text-stone-700 hover:bg-stone-200 disabled:opacity-40"
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <label className="block">
@@ -126,6 +196,49 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, followers, u
         />
       </label>
 
+      {/* Photo (optional) */}
+      <div>
+        <p className="text-sm font-medium">
+          Photo <span className="font-normal text-muted">(optional, shows big in the notification on Android)</span>
+        </p>
+        {imageUrl ? (
+          <div className="mt-2 flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={imageUrl} alt="" className="size-20 rounded-xl object-cover ring-1 ring-stone-200" />
+            <button type="button" onClick={() => setImageUrl(null)} className="text-sm text-stone-500 hover:text-red-700">
+              Remove photo
+            </button>
+          </div>
+        ) : canUploadPhoto ? (
+          <label className={`${btnSecondary} mt-2 cursor-pointer ${disabled || uploading ? "pointer-events-none opacity-50" : ""}`}>
+            {uploading ? "Uploading…" : "📷 Add a photo"}
+            <input type="file" accept="image/*" onChange={pickPhoto} className="hidden" disabled={disabled || uploading} />
+          </label>
+        ) : (
+          <p className="mt-1 text-xs text-muted">Photo uploads are being set up. You can send offers without a photo.</p>
+        )}
+      </div>
+
+      {/* Counter code */}
+      <div>
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" checked={withCode} onChange={(e) => setWithCode(e.target.checked)} disabled={disabled} className="size-4 accent-stone-900" />
+          Show a code to bring to the counter
+        </label>
+        {withCode && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input
+              value={code}
+              onChange={(e) => setCodeTyped(e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 20))}
+              disabled={disabled}
+              className="w-44 rounded-lg border border-stone-300 bg-white px-3 py-2 font-mono text-sm tracking-wider uppercase"
+              aria-label="Counter code"
+            />
+            <span className="text-xs text-muted">Staff tap “+1 used” in Sent offers when a customer shows it.</span>
+          </div>
+        )}
+      </div>
+
       {/* How the notification will look on a phone. */}
       <div>
         <p className="text-xs font-medium text-muted">Preview</p>
@@ -146,19 +259,31 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, followers, u
         <div className="fixed inset-0 z-50 flex flex-col items-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Offer preview">
           <p className="mt-2 text-sm font-semibold text-white">What customers see when they tap your offer</p>
           {/* The notification itself */}
-          <div className="mt-3 flex w-full max-w-sm items-start gap-3 rounded-2xl bg-white/95 p-3 shadow-lg">
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-100 text-xs font-bold text-brand-700">{initials(shopName)}</span>
-            <span className="min-w-0 text-sm">
-              <span className="block font-semibold">{shopName}</span>
-              <span className="block break-words text-stone-700">{text || "Your offer appears here"}</span>
-            </span>
+          <div className="mt-3 w-full max-w-sm overflow-hidden rounded-2xl bg-white/95 shadow-lg">
+            <div className="flex items-start gap-3 p-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-100 text-xs font-bold text-brand-700">{initials(shopName)}</span>
+              <span className="min-w-0 text-sm">
+                <span className="block font-semibold">{shopName}</span>
+                <span className="block break-words text-stone-700">{text || "Your offer appears here"}</span>
+              </span>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {imageUrl && <img src={imageUrl} alt="" className="max-h-40 w-full object-cover" />}
           </div>
           <p className="mt-2 text-xs text-white/80">↓ after tapping it</p>
           {/* The page, inside a phone frame */}
           <div className="mt-2 w-full max-w-sm overflow-hidden rounded-[2rem] border-[6px] border-stone-800 bg-stone-50 shadow-2xl">
             <div className="flex min-h-[28rem] flex-col px-5 pt-8 pb-6">
               <ShopHeader name={shopName} logoUrl={logoUrl} />
-              <OfferCard shopName={shopName} mapsUrl={mapsUrl} text={text} endsAt={endsOn ? `${endsOn}T23:59:59+05:30` : null} />
+              <OfferCard
+                shopName={shopName}
+                mapsUrl={mapsUrl}
+                phone={phone}
+                text={text}
+                endsAt={endsOn ? `${endsOn}T23:59:59+05:30` : null}
+                imageUrl={imageUrl}
+                code={withCode ? code : null}
+              />
               <p className="mt-4 text-center text-sm text-stone-500 underline">Stop offers from {shopName}</p>
             </div>
           </div>

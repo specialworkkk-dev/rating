@@ -160,6 +160,7 @@ const buildSections = (TOKEN_TERMS) => [
             exchange for a rating or a Google review.
           </li>
           <li>Only send offers from your own shop. No unrelated adverts, and no offensive or misleading content.</li>
+          <li>Photos you add must be yours or used with permission. Honour the codes and prices you show in an offer.</li>
           <li>
             Customers can stop at any time. If someone asks you to stop on WhatsApp, remove their number the same day, and use the
             WhatsApp list only to send your own offers.

@@ -11,6 +11,9 @@ const OfferSchema = new mongoose.Schema(
     sentTo: { type: Number, default: 0 }, // accepted by the push services
     removed: { type: Number, default: 0 }, // no longer following (deleted automatically)
     failed: { type: Number, default: 0 }, // temporary errors
+    imageUrl: String, // optional photo (Cloudflare R2), shown in the notification and on the offer page
+    code: { type: String, trim: true, maxlength: 20 }, // shown to customers: "Show this at the counter"
+    redeemed: { type: Number, default: 0 }, // tapped "+1 used" at the counter
   },
   { versionKey: false }
 );

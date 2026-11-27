@@ -20,6 +20,8 @@ const ShopSchema = new mongoose.Schema(
     contactPhone: { type: String, trim: true },
     contactPhone2: { type: String, trim: true },
     contactNotes: { type: String, trim: true },
+    // Shown to customers on offer pages ("📞 Call shop"). Optional.
+    publicPhone: { type: String, trim: true },
     status: { type: String, enum: ["trial", "active", "paused"], default: "trial" },
     trialEndsAt: Date,
     paidUntil: Date,

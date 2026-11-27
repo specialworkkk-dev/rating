@@ -8,6 +8,9 @@ import { LEGAL } from "@/lib/legal";
 import { offersLimit, offersLive, offersUsedThisMonth, pushConfigured } from "@/lib/offers";
 import { getOwnerContext } from "@/lib/ownerContext";
 import { publicShop } from "@/lib/shop";
+import { imageStore } from "@/lib/imageStore";
+import { templateById } from "@/lib/offerTemplates";
+import ShopPhoneCard from "@/components/ShopPhoneCard";
 import { DEFAULT_OFFERS_PRICE, formatINR } from "@/lib/pricing";
 import Follower from "@/models/Follower";
 import Offer from "@/models/Offer";
@@ -52,8 +55,9 @@ function Premium({ shop }) {
   );
 }
 
-export default async function OffersPage() {
+export default async function OffersPage({ searchParams }) {
   const { shop, paused } = await getOwnerContext();
+  const { template } = await searchParams;
   if (!shop?.offersEnabled) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-6">
@@ -85,6 +89,9 @@ export default async function OffersPage() {
       sentLabel: sentFmt.format(o.sentAt),
       endsLabel: o.endsAt ? dayFmt.format(o.endsAt) : null,
       url: `/r/${shop.slug}/offer/${o._id}`,
+      imageUrl: o.imageUrl || null,
+      code: o.code || null,
+      redeemed: o.redeemed || 0,
       followers: o.followers || 0,
       sentTo: o.sentTo || 0,
       removed: o.removed || 0,
@@ -129,11 +136,16 @@ export default async function OffersPage() {
         shopName={shop.name}
         logoUrl={shop.logoUrl || null}
         mapsUrl={publicShop(shop).mapsUrl}
+        phone={shop.publicPhone || null}
         followers={followers}
         used={used}
         limit={limit}
         disabled={!live}
+        initialText={templateById(template)?.text || ""}
+        canUploadPhoto={Boolean(imageStore())}
       />
+
+      <ShopPhoneCard phone={shop.publicPhone || ""} />
 
       <section className={card}>
         <h2 className="font-semibold">Sent offers</h2>

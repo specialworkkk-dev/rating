@@ -21,7 +21,7 @@ export default async function OfferPage({ params }) {
   let offer = null;
   if (mongoose.isValidObjectId(id)) {
     await connectDB();
-    offer = await Offer.findOne({ _id: id, shopId: shop.id }).select("text endsAt sentAt").lean();
+    offer = await Offer.findOne({ _id: id, shopId: shop.id }).select("text endsAt sentAt imageUrl code").lean();
   }
   // endsAt is stored as the end of the "valid till" day in India.
   const ended = offer?.endsAt && new Date(offer.endsAt) < new Date();
@@ -30,7 +30,16 @@ export default async function OfferPage({ params }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-10 pb-8">
       <ShopHeader name={shop.name} logoUrl={shop.logoUrl} />
-      <OfferCard shopName={shop.name} mapsUrl={shop.mapsUrl} text={offer?.text} endsAt={offer?.endsAt} available={Boolean(available)} />
+      <OfferCard
+        shopName={shop.name}
+        mapsUrl={shop.mapsUrl}
+        phone={shop.publicPhone}
+        text={offer?.text}
+        endsAt={offer?.endsAt}
+        imageUrl={offer?.imageUrl}
+        code={offer?.code}
+        available={Boolean(available)}
+      />
       <UnfollowOffers slug={shop.slug} shopName={shop.name} />
       <p className="mt-auto pt-10 text-center text-xs text-stone-400">
         Powered by {BRAND.name} ·{" "}

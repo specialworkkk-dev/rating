@@ -14,6 +14,7 @@ self.addEventListener("push", (event) => {
       icon: data.icon || "/icon.png",
       badge: "/icon.png",
       tag: data.tag,
+      image: data.image, // big picture (Android)
       data: { url: data.url || "/" },
     })
   );

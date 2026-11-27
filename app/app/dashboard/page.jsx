@@ -3,6 +3,9 @@ import DashboardHero from "@/components/DashboardHero";
 import FairReviewRules from "@/components/FairReviewRules";
 import FairRulesAgree from "@/components/FairRulesAgree";
 import FeedbackReminder from "@/components/FeedbackReminder";
+import FestivalReminder from "@/components/FestivalReminder";
+import { upcomingFestival } from "@/lib/festivals";
+import { istDayKey } from "@/lib/totals";
 import { feedbackReminderCount } from "@/lib/feedbackReminder";
 import { hasAgreedToTerms } from "@/lib/legal";
 import { getTermsVersion } from "@/lib/tokenSettings";
@@ -61,6 +64,7 @@ export default async function DashboardPage({ searchParams }) {
   ]);
   // Every 2 months: suggest deleting feedback older than 2 months (never automatic).
   const oldFeedback = hasAgreedToTerms(shop, termsVersion) ? await feedbackReminderCount(shop) : 0;
+  const festival = paused ? null : upcomingFestival(istDayKey(new Date()));
   const ratingUrl = `${base}/r/${shop.slug}`;
   const until = shop.status === "trial" ? shop.trialEndsAt : shop.paidUntil;
   const daysLeft = until ? Math.max(0, Math.ceil((new Date(until) - Date.now()) / 86400000)) : null;
@@ -84,6 +88,7 @@ export default async function DashboardPage({ searchParams }) {
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-6">
         {oldFeedback > 0 && <FeedbackReminder count={oldFeedback} />}
         <SpikeWarning spike={spike} />
+        {festival && <FestivalReminder festival={festival} offersOn={Boolean(shop.offersEnabled)} />}
 
         <DashboardHero shop={shop} planText={planText} summary={summary} ratingUrl={ratingUrl} unread={stats.unreadFeedback} />
 
