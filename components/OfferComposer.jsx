@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fmtNum } from "@/lib/format";
 import { OFFER_TEMPLATES, offerCodeWord } from "@/lib/offerTemplates";
 import OfferCard from "./OfferCard";
@@ -58,6 +58,17 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, phone, follo
   const [endsOn, setEndsOn] = useState("");
   const [group, setGroup] = useState(0);
   const [previewing, setPreviewing] = useState(false);
+
+  // While the preview is open, the page behind it doesn't scroll (so the phone's
+  // address bar doesn't resize and uncover it).
+  useEffect(() => {
+    if (!previewing) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [previewing]);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null); // { type, text }
@@ -256,10 +267,14 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, phone, follo
       {msg && <p className={`text-sm ${msg.type === "error" ? "text-red-600" : "text-emerald-700"}`}>{msg.text}</p>}
 
       {previewing && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center overflow-y-auto bg-stone-950/95 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Offer preview">
-          <p className="mt-2 text-sm font-semibold text-white">What customers see when they tap your offer</p>
+        // Dark cover for the tallest screen size (browser bars hidden), so the page never peeks through.
+        <div className="fixed inset-x-0 top-0 z-50 h-[100lvh] bg-stone-950" aria-hidden="true" />
+      )}
+      {previewing && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center overflow-y-auto overscroll-contain bg-stone-950 px-4 pt-4 pb-0" role="dialog" aria-modal="true" aria-label="Offer preview">
+          <p className="mt-2 shrink-0 text-sm font-semibold text-white">What customers see when they tap your offer</p>
           {/* The notification itself */}
-          <div className="mt-3 w-full max-w-sm overflow-hidden rounded-2xl bg-white/95 shadow-lg">
+          <div className="mt-3 w-full max-w-sm shrink-0 overflow-hidden rounded-2xl bg-white/95 shadow-lg">
             <div className="flex items-start gap-3 p-3">
               <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-100 text-xs font-bold text-brand-700">{initials(shopName)}</span>
               <span className="min-w-0 text-sm">
@@ -270,9 +285,10 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, phone, follo
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {imageUrl && <img src={imageUrl} alt="" className="max-h-40 w-full object-cover" />}
           </div>
-          <p className="mt-2 text-xs text-white/80">↓ after tapping it</p>
+          <p className="mt-2 shrink-0 text-xs text-white/80">↓ after tapping it (scroll to see it all)</p>
           {/* The page, inside a phone frame */}
-          <div className="mt-2 w-full max-w-sm overflow-hidden rounded-[2rem] border-[6px] border-stone-800 bg-stone-50 shadow-2xl">
+          {/* shrink-0: keep the full height and let the overlay scroll (never squeeze and cut). */}
+          <div className="mt-2 w-full max-w-sm shrink-0 overflow-hidden rounded-[2rem] border-[6px] border-stone-800 bg-stone-50 shadow-2xl">
             <div className="flex min-h-[28rem] flex-col px-5 pt-8 pb-6">
               <ShopHeader name={shopName} logoUrl={logoUrl} />
               <OfferCard
@@ -287,7 +303,8 @@ export default function OfferComposer({ shopName, logoUrl, mapsUrl, phone, follo
               <p className="mt-4 text-center text-sm text-stone-500 underline">Stop offers from {shopName}</p>
             </div>
           </div>
-          <div className="mt-4 flex w-full max-w-sm gap-2 pb-4">
+          {/* Always reachable while scrolling. */}
+          <div className="sticky bottom-0 mt-4 flex w-full max-w-sm shrink-0 gap-2 bg-stone-950 pt-3 pb-4">
             <button type="button" onClick={() => setPreviewing(false)} className="flex-1 rounded-xl bg-white py-3 font-semibold text-ink">
               ✏️ Edit
             </button>
